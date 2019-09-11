@@ -5,6 +5,7 @@ Miscellaneous utility functions for user applications.
 """
 
 import os
+import base64
 import signal
 from ctypes import cdll
 import itertools
@@ -17,7 +18,7 @@ from hops import version
 from hops import constants
 import ssl
 
-#! Needed for hops library backwards compatability
+# ! Needed for hops library backwards compatability
 try:
     import requests
 except:
@@ -45,6 +46,7 @@ try:
 except:
     pass
 
+
 def _get_elastic_endpoint():
     """
 
@@ -55,6 +57,7 @@ def _get_elastic_endpoint():
     elastic_endpoint = os.environ[constants.ENV_VARIABLES.ELASTIC_ENDPOINT_ENV_VAR]
     host, port = elastic_endpoint.split(':')
     return host + ':' + port
+
 
 elastic_endpoint = None
 try:
@@ -72,11 +75,13 @@ def _get_hopsworks_rest_endpoint():
     """
     return os.environ[constants.ENV_VARIABLES.REST_ENDPOINT_END_VAR]
 
+
 hopsworks_endpoint = None
 try:
     hopsworks_endpoint = _get_hopsworks_rest_endpoint()
 except:
     pass
+
 
 def _find_in_path(path, file):
     """
@@ -96,6 +101,7 @@ def _find_in_path(path, file):
             return candidate
     return False
 
+
 def _find_tensorboard():
     """
     Utility method for finding the tensorboard binary
@@ -105,11 +111,13 @@ def _find_tensorboard():
     """
     pypath = os.getenv("PYSPARK_PYTHON")
     pydir = os.path.dirname(pypath)
-    search_path = os.pathsep.join([pydir, os.environ[constants.ENV_VARIABLES.PATH_ENV_VAR], os.environ[constants.ENV_VARIABLES.PYTHONPATH_ENV_VAR]])
+    search_path = os.pathsep.join([pydir, os.environ[constants.ENV_VARIABLES.PATH_ENV_VAR],
+                                   os.environ[constants.ENV_VARIABLES.PYTHONPATH_ENV_VAR]])
     tb_path = _find_in_path(search_path, 'tensorboard')
     if not tb_path:
         raise Exception("Unable to find 'tensorboard' in: {}".format(search_path))
     return tb_path
+
 
 def _on_executor_exit(signame):
     """
@@ -123,6 +131,7 @@ def _on_executor_exit(signame):
         set_parent_exit_signal
     """
     signum = getattr(signal, signame)
+
     def set_parent_exit_signal():
         # http://linux.die.net/man/2/prctl
 
@@ -130,7 +139,9 @@ def _on_executor_exit(signame):
         result = cdll['libc.so.6'].prctl(PR_SET_PDEATHSIG, signum)
         if result != 0:
             raise Exception('prctl failed with error code %s' % result)
+
     return set_parent_exit_signal
+
 
 def _get_host_port_pair():
     """
@@ -147,6 +158,7 @@ def _get_host_port_pair():
     host_port_pair = endpoint.split(':')
     return host_port_pair
 
+
 def _get_http_connection(https=False):
     """
     Opens a HTTP(S) connection to Hopsworks
@@ -161,16 +173,18 @@ def _get_http_connection(https=False):
     if (https):
         PROTOCOL = ssl.PROTOCOL_TLSv1_2
         ssl_context = ssl.SSLContext(PROTOCOL)
-        connection = http.HTTPSConnection(str(host_port_pair[0]), int(host_port_pair[1]), context = ssl_context)
+        connection = http.HTTPSConnection(str(host_port_pair[0]), int(host_port_pair[1]), context=ssl_context)
     else:
         connection = http.HTTPConnection(str(host_port_pair[0]), int(host_port_pair[1]))
     return connection
+
 
 def set_auth_header(headers):
     if constants.ENV_VARIABLES.REMOTE_ENV_VAR in os.environ:
         headers[constants.HTTP_CONFIG.HTTP_AUTHORIZATION] = "ApiKey " + get_api_key_aws(hdfs.project_name())
     else:
         headers[constants.HTTP_CONFIG.HTTP_AUTHORIZATION] = "Bearer " + get_jwt()
+
 
 def send_request(connection, method, resource, body=None, headers=None):
     """
@@ -209,6 +223,7 @@ def num_executors():
     sc = _find_spark().sparkContext
     return int(sc._conf.get("spark.dynamicAllocation.maxExecutors"))
 
+
 def num_param_servers():
     """
     Get the number of parameter servers configured for Jupyter
@@ -221,6 +236,7 @@ def num_param_servers():
         return int(sc._conf.get("spark.tensorflow.num.ps"))
     except:
         return 0
+
 
 def grid_params(dict):
     """
@@ -249,6 +265,7 @@ def grid_params(dict):
         args_dict[key] = args_arr
     return args_dict
 
+
 def _get_ip_address():
     """
     Simple utility to get host IP address
@@ -261,6 +278,7 @@ def _get_ip_address():
         return addr[0]
     except:
         return socket.gethostbyname(socket.getfqdn())
+
 
 def _time_diff(task_start, task_end):
     """
@@ -290,6 +308,7 @@ def _time_diff(task_start, task_end):
     else:
         return 'unknown time'
 
+
 def _put_elastic(project, appid, elastic_id, json_data):
     """
     Utility method for putting JSON data into elastic search
@@ -310,9 +329,11 @@ def _put_elastic(project, appid, elastic_id, json_data):
     session = requests.Session()
 
     retries = 3
-    resp=None
+    resp = None
     while retries > 0:
-        resp = session.put("http://" + elastic_endpoint + "/" +  project.lower() + "_experiments/experiments/" + appid + "_" + str(elastic_id), data=json_data, headers=headers, verify=False)
+        resp = session.put(
+            "http://" + elastic_endpoint + "/" + project.lower() + "_experiments/experiments/" + appid + "_" + str(
+                elastic_id), data=json_data, headers=headers, verify=False)
         if resp.status_code == 200:
             return
         else:
@@ -327,8 +348,8 @@ def _put_elastic(project, appid, elastic_id, json_data):
                            " It is possible Elastic is experiencing problems. Please contact an administrator.")
 
 
-
-def _populate_experiment(sc, model_name, module, function, logdir, hyperparameter_space, versioned_resources, description):
+def _populate_experiment(sc, model_name, module, function, logdir, hyperparameter_space, versioned_resources,
+                         description):
     """
     Args:
          :sc:
@@ -351,7 +372,7 @@ def _populate_experiment(sc, model_name, module, function, logdir, hyperparamete
                        'name': model_name,
                        'module': module,
                        'function': function,
-                       'status':'RUNNING',
+                       'status': 'RUNNING',
                        'app_id': sc.applicationId,
                        'start': datetime.now().isoformat(),
                        'memory_per_executor': str(sc._conf.get("spark.executor.memory")),
@@ -361,6 +382,7 @@ def _populate_experiment(sc, model_name, module, function, logdir, hyperparamete
                        'hyperparameter_space': hyperparameter_space,
                        'versioned_resources': versioned_resources,
                        'description': description})
+
 
 def _finalize_experiment(experiment_json, hyperparameter, metric):
     """
@@ -381,6 +403,7 @@ def _finalize_experiment(experiment_json, hyperparameter, metric):
 
     return json.dumps(experiment_json)
 
+
 def _add_version(experiment_json):
     experiment_json['spark'] = os.environ['SPARK_VERSION']
 
@@ -396,6 +419,7 @@ def _add_version(experiment_json):
     experiment_json['kafka'] = os.environ[constants.ENV_VARIABLES.KAFKA_VERSION_ENV_VAR]
     return experiment_json
 
+
 def _store_local_tensorboard(local_tb, hdfs_exec_logdir):
     """
 
@@ -409,6 +433,7 @@ def _store_local_tensorboard(local_tb, hdfs_exec_logdir):
     tb_contents = os.listdir(local_tb)
     for entry in tb_contents:
         pydoop.hdfs.put(local_tb + '/' + entry, hdfs_exec_logdir)
+
 
 def _version_resources(versioned_resources, rundir):
     """
@@ -436,6 +461,7 @@ def _version_resources(versioned_resources, rundir):
 
     return ', '.join(versioned_paths)
 
+
 def _convert_to_dict(best_param):
     """
     Utiliy method for converting best_param string to dict
@@ -447,12 +473,13 @@ def _convert_to_dict(best_param):
         a dict with param->value
 
     """
-    best_param_dict={}
+    best_param_dict = {}
     for hp in best_param:
         hp = hp.split('=')
         best_param_dict[hp[0]] = hp[1]
 
     return best_param_dict
+
 
 def _find_spark():
     """
@@ -461,6 +488,7 @@ def _find_spark():
 
     """
     return SparkSession.builder.getOrCreate()
+
 
 def _parse_rest_error(response_dict):
     """
@@ -482,6 +510,7 @@ def _parse_rest_error(response_dict):
     if constants.REST_CONFIG.JSON_USR_MSG in response_dict:
         user_msg = response_dict[constants.REST_CONFIG.JSON_USR_MSG]
     return error_code, error_msg, user_msg
+
 
 def get_job_name():
     """
@@ -507,7 +536,19 @@ def get_jwt():
     with open(constants.REST_CONFIG.JWT_TOKEN, "r") as jwt:
         return jwt.read()
 
-def get_api_key_aws(project_name):
+
+def get_api_key_aws(project_name, secrect_key='api-key'):
+    """
+    ToDo: refactor function name, e.g. get_secret_aws()
+
+    Returns secret value from AWS Secrets Manager
+
+    Args:
+        :project_name (str): name of project
+        :secret_type (str): key for the secret value, e.g. `api-key`, `cert-key`, `trust-store`, `key-store`
+    Returns:
+        :str: secret value
+    """
     import boto3
 
     def assumed_role():
@@ -533,7 +574,21 @@ def get_api_key_aws(project_name):
         region_name=region_name
     )
     get_secret_value_response = client.get_secret_value(SecretId=secret_name)
-    return json.loads(get_secret_value_response['SecretString'])['api-key']
+    return json.loads(get_secret_value_response['SecretString'])[secrect_key]
+
+
+def write_b64_cert_to_bytes(b64_string, path):
+    """Converts b64 encoded certificate to bytes file .
+
+    Args:
+        :b64_string (str): b64 encoded string of certificate
+        :path (str): path where file is saved, including file name. e.g. /path/key-store.jks
+    """
+
+    with open(path, 'wb') as f:
+        cert_b64 = base64.b64decode(b64_string)
+        f.write(cert_b64)
+
 
 def abspath(hdfs_path):
     if constants.ENV_VARIABLES.REMOTE_ENV_VAR in os.environ:

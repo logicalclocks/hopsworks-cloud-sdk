@@ -202,6 +202,7 @@ from hops.featurestore_impl import core
 from hops.featurestore_impl.exceptions.exceptions import CouldNotConvertDataframe, FeatureVisualizationError, \
     StatisticsComputationError
 import os
+from pyhive import hive
 
 
 def project_featurestore():
@@ -1830,6 +1831,16 @@ def connect(host, project_name, port = 443, region_name = constants.AWS.DEFAULT_
     Returns:
         None
     """
+    # download certificates from AWS Secret manager to access Hive
+    key_store = util.get_api_key_aws(project_name, 'key-store')
+    util.write_b64_cert_to_bytes(key_store, path='keyStore.jks')
+    print('write key Store')
+    trust_store = util.get_api_key_aws(project_name, 'trust-store')
+    util.write_b64_cert_to_bytes(trust_store, path='trustStore.jks')
+    cert_key = util.get_api_key_aws(project_name, 'cert-key')
+
+    # write env variables
+    os.environ["CERT_KEY"] = cert_key
     os.environ[constants.ENV_VARIABLES.REMOTE_ENV_VAR] = 'True'
     os.environ[constants.ENV_VARIABLES.REST_ENDPOINT_END_VAR] = host + ':' + str(port)
     os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_NAME_ENV_VAR] = project_name
