@@ -17,6 +17,7 @@ Module hierarchy of featurestore implementation:
 """
 
 import json
+import pandas as pd
 
 from hops import constants, util, hdfs, tls
 from hops.featurestore_impl.dao.common.featurestore_metadata import FeaturestoreMetadata
@@ -36,6 +37,8 @@ from hops.featurestore_impl.query_planner.logical_query_plan import LogicalQuery
 from hops.featurestore_impl.rest import rest_rpc
 from hops.featurestore_impl.util import fs_utils
 from hops.featurestore_impl.visualizations import statistics_plots
+
+
 
 # for backwards compatibility
 try:
@@ -379,19 +382,19 @@ def _do_get_feature(feature, featurestore_metadata, featurestore=None, featuregr
     return fs_utils._return_dataframe_type(result, dataframe_type)
 
 
-def _run_and_log_sql(spark, sql_str):
+def _run_and_log_sql(hive_conn, sql_str):
     """
-    Runs and logs an SQL query with sparkSQL
+    Runs and logs an SQL query with pyHive
 
     Args:
-        :spark: the spark session
+        :hive_conn: the hive session
         :sql_str: the query to run
 
     Returns:
-        the result of the SQL query
+        :pd.DataFrame: the result of the SQL query as pandas dataframe
     """
     fs_utils._log("Running sql: {}".format(sql_str))
-    return spark.sql(sql_str)
+    return pd.read_sql(sql_str, hive_conn)
 
 
 def _write_featuregroup_hive(spark_df, featuregroup, featurestore, featuregroup_version, mode):

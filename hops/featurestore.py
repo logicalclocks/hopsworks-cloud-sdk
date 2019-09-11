@@ -202,6 +202,7 @@ from hops.featurestore_impl import core
 from hops.featurestore_impl.exceptions.exceptions import CouldNotConvertDataframe, FeatureVisualizationError, \
     StatisticsComputationError
 import os
+from pyhive import hive
 
 
 def project_featurestore():
@@ -254,20 +255,20 @@ def get_featuregroup(featuregroup, featurestore=None, featuregroup_version=1, da
     if featurestore is None:
         featurestore = project_featurestore()
 
-    try: # Try with cached metadata
+    try:  # Try with cached metadata
         return core._do_get_featuregroup(featuregroup,
                                          core._get_featurestore_metadata(featurestore, update_cache=False),
                                          featurestore=featurestore, featuregroup_version=featuregroup_version,
-                                         dataframe_type = dataframe_type, jdbc_args=jdbc_args)
-    except: # Try again after updating the cache
+                                         dataframe_type=dataframe_type, jdbc_args=jdbc_args)
+    except:  # Try again after updating the cache
         return core._do_get_featuregroup(featuregroup,
                                          core._get_featurestore_metadata(featurestore, update_cache=True),
                                          featurestore=featurestore, featuregroup_version=featuregroup_version,
-                                         dataframe_type = dataframe_type, jdbc_args=jdbc_args)
+                                         dataframe_type=dataframe_type, jdbc_args=jdbc_args)
 
 
 def get_feature(feature, featurestore=None, featuregroup=None, featuregroup_version=1, dataframe_type="spark",
-                jdbc_args = {}):
+                jdbc_args={}):
     """
     Gets a particular feature (column) from a featurestore, if no featuregroup is specified it queries
     hopsworks metastore to see if the feature exists in any of the featuregroups in the featurestore.
@@ -311,7 +312,7 @@ def get_feature(feature, featurestore=None, featuregroup=None, featuregroup_vers
 
 
 def get_features(features, featurestore=None, featuregroups_version_dict={}, join_key=None, dataframe_type="spark",
-                 jdbc_args = {}):
+                 jdbc_args={}):
     """
     Gets a list of features (columns) from the featurestore. If no featuregroup is specified it will query hopsworks
     metastore to find where the features are stored. It will try to construct the query first from the cached metadata,
@@ -357,17 +358,17 @@ def get_features(features, featurestore=None, featuregroups_version_dict={}, joi
                                      join_key=join_key, dataframe_type=dataframe_type, jdbc_args=jdbc_args)
 
 
-def sql(query, featurestore=None, dataframe_type="spark"):
+def sql(query, featurestore=None):
     """
-    Executes a generic SQL query on the featurestore
+    Executes a generic SQL query on the featurestore via pyHive
 
     Example usage:
 
     >>> # The API will default to the project's feature store
-    >>> featurestore.sql("SELECT * FROM trx_graph_summary_features_1 WHERE triangle_count > 5").show(5)
+    >>> featurestore.sql("SELECT * FROM trx_graph_summary_features_1 WHERE triangle_count > 5").head(5)
     >>> # You can also explicitly define the feature store
     >>> featurestore.sql("SELECT * FROM trx_graph_summary_features_1 WHERE triangle_count > 5",
-    >>>                  featurestore=featurestore.project_featurestore()).show(5)
+    >>>                  featurestore=featurestore.project_featurestore()).head5)
 
     Args:
         :query: SQL query
@@ -375,19 +376,35 @@ def sql(query, featurestore=None, dataframe_type="spark"):
         :dataframe_type: the type of the returned dataframe (spark, pandas, python or numpy)
 
     Returns:
-        A dataframe with the query results
-
+        (pandas.DataFrame): A pandas dataframe with the query results
     """
     if featurestore is None:
         featurestore = project_featurestore()
-    spark = util._find_spark()
-    core._verify_hive_enabled(spark)
-    spark.sparkContext.setJobGroup("Running SQL query against feature store",
-                                   "Running query: {} on the featurestore {}".format(query, featurestore))
-    core._use_featurestore(spark, featurestore)
-    result = core._run_and_log_sql(spark, query)
-    spark.sparkContext.setJobGroup("", "")
-    return fs_utils._return_dataframe_type(result, dataframe_type)
+
+    # get host without port
+    host = os.environ[constants.ENV_VARIABLES.REST_ENDPOINT_END_VAR].split(':')[0]
+
+    hive_conn = hive.Connection(host=host,
+                                port=9085,
+                                database=featurestore,
+                                auth='CERTIFICATES',
+                                truststore='trustStore.jks',
+                                keystore='keyStore.jks',
+                                keystore_password=os.environ["CERT_KEY"])
+    dataframe = core._run_and_log_sql(hive_conn, query)
+    hive_conn.close()
+
+    return dataframe
+
+    ### old spark code
+    # spark = util._find_spark()
+    # core._verify_hive_enabled(spark)
+    # spark.sparkContext.setJobGroup("Running SQL query against feature store",
+    #                                "Running query: {} on the featurestore {}".format(query, featurestore))
+    # core._use_featurestore(spark, featurestore)
+    # result = core._run_and_log_sql(spark, query)
+    # spark.sparkContext.setJobGroup("", "")
+    # return fs_utils._return_dataframe_type(result, dataframe_type)
 
 
 def insert_into_featuregroup(df, featuregroup, featurestore=None, featuregroup_version=1, mode="append",
@@ -928,7 +945,7 @@ def create_training_dataset(df, training_dataset, description="", featurestore=N
                                      num_bins, corr_method, num_clusters, petastorm_args, fixed, storage_connector)
 
 
-def get_storage_connectors(featurestore = None):
+def get_storage_connectors(featurestore=None):
     """
     Retrieves the names of all storage connectors in the feature store
 
@@ -953,7 +970,7 @@ def get_storage_connectors(featurestore = None):
         return core._do_get_storage_connectors(core._get_featurestore_metadata(featurestore, update_cache=True))
 
 
-def get_storage_connector(storage_connector_name, featurestore = None):
+def get_storage_connector(storage_connector_name, featurestore=None):
     """
     Looks up a storage connector by name
 
@@ -1202,14 +1219,16 @@ def update_training_dataset_stats(training_dataset, training_dataset_version=1, 
                                                    training_dataset_version=training_dataset_version,
                                                    descriptive_statistics=descriptive_statistics,
                                                    feature_correlation=feature_correlation,
-                                                   feature_histograms=feature_histograms, cluster_analysis=cluster_analysis,
-                                                   stat_columns=stat_columns, num_bins=num_bins, corr_method=corr_method,
+                                                   feature_histograms=feature_histograms,
+                                                   cluster_analysis=cluster_analysis,
+                                                   stat_columns=stat_columns, num_bins=num_bins,
+                                                   corr_method=corr_method,
                                                    num_clusters=num_clusters)
         except Exception as e:
             raise StatisticsComputationError("There was an error in computing the statistics for training dataset: {}"
-                                            " , with version: {} in featurestore: {}. "
-                                            "Error: {}".format(training_dataset, training_dataset_version,
-                                                               featurestore, str(e)))
+                                             " , with version: {} in featurestore: {}. "
+                                             "Error: {}".format(training_dataset, training_dataset_version,
+                                                                featurestore, str(e)))
 
 
 def get_featuregroup_partitions(featuregroup, featurestore=None, featuregroup_version=1, dataframe_type="spark"):
@@ -1317,7 +1336,7 @@ def visualize_featuregroup_distributions(featuregroup_name, featurestore=None, f
                 featuregroup_name, featuregroup_version, featurestore, str(e)))
 
 
-def visualize_featuregroup_correlations(featuregroup_name, featurestore=None, featuregroup_version=1, figsize=(16,12),
+def visualize_featuregroup_correlations(featuregroup_name, featurestore=None, featuregroup_version=1, figsize=(16, 12),
                                         cmap="coolwarm", annot=True, fmt=".2f", linewidths=.05, plot=True):
     """
     Visualizes the feature correlations (if they have been computed) for a featuregroup in the featurestore
@@ -1364,7 +1383,7 @@ def visualize_featuregroup_correlations(featuregroup_name, featurestore=None, fe
     try:
         # Construct the figure
         fig = core._do_visualize_featuregroup_correlations(featuregroup_name, featurestore, featuregroup_version,
-                                                            figsize=figsize, cmap=cmap, annot=annot, fmt=fmt,
+                                                           figsize=figsize, cmap=cmap, annot=annot, fmt=fmt,
                                                            linewidths=linewidths)
         if plot:
             # Plot the figure
@@ -1391,7 +1410,7 @@ def visualize_featuregroup_correlations(featuregroup_name, featurestore=None, fe
                 featuregroup_name, featuregroup_version, featurestore, str(e)))
 
 
-def visualize_featuregroup_clusters(featuregroup_name, featurestore=None, featuregroup_version=1, figsize=(16,12),
+def visualize_featuregroup_clusters(featuregroup_name, featurestore=None, featuregroup_version=1, figsize=(16, 12),
                                     plot=True):
     """
     Visualizes the feature clusters (if they have been computed) for a featuregroup in the featurestore
@@ -1430,7 +1449,7 @@ def visualize_featuregroup_clusters(featuregroup_name, featurestore=None, featur
     try:
         # Construct the figure
         fig = core._do_visualize_featuregroup_clusters(featuregroup_name, featurestore, featuregroup_version,
-                                                           figsize=figsize)
+                                                       figsize=figsize)
         if plot:
             # Plot the figure
             fig.tight_layout()
@@ -1442,7 +1461,7 @@ def visualize_featuregroup_clusters(featuregroup_name, featurestore=None, featur
         try:
             # Construct the figure
             fig = core._do_visualize_featuregroup_clusters(featuregroup_name, featurestore, featuregroup_version,
-                                                               figsize=figsize)
+                                                           figsize=figsize)
             if plot:
                 # Plot the figure
                 fig.tight_layout()
@@ -1482,14 +1501,14 @@ def visualize_featuregroup_descriptive_stats(featuregroup_name, featurestore=Non
         featurestore = project_featurestore()
     try:
         df = core._do_visualize_featuregroup_descriptive_stats(featuregroup_name, featurestore,
-                                                                   featuregroup_version)
+                                                               featuregroup_version)
         return df
     except:
         # Retry with updated cache
         core._get_featurestore_metadata(featurestore, update_cache=True)
         try:
             df = core._do_visualize_featuregroup_descriptive_stats(featuregroup_name, featurestore,
-                                                                       featuregroup_version)
+                                                                   featuregroup_version)
             return df
 
         except Exception as e:
@@ -1545,8 +1564,8 @@ def visualize_training_dataset_distributions(training_dataset_name, featurestore
     try:
         # Construct the figure
         fig = core._do_visualize_training_dataset_distributions(training_dataset_name, featurestore,
-                                                            training_dataset_version, figsize=figsize, color=color,
-                                                            log=log, align=align)
+                                                                training_dataset_version, figsize=figsize, color=color,
+                                                                log=log, align=align)
         if plot:
             # Plot the figure
             fig.tight_layout()
@@ -1558,8 +1577,9 @@ def visualize_training_dataset_distributions(training_dataset_name, featurestore
         try:
             # Construct the figure
             fig = core._do_visualize_training_dataset_distributions(training_dataset_name, featurestore,
-                                                                training_dataset_version, figsize=figsize, color=color,
-                                                                log=log, align=align)
+                                                                    training_dataset_version, figsize=figsize,
+                                                                    color=color,
+                                                                    log=log, align=align)
             if plot:
                 # Plot the figure
                 fig.tight_layout()
@@ -1574,7 +1594,7 @@ def visualize_training_dataset_distributions(training_dataset_name, featurestore
 
 
 def visualize_training_dataset_correlations(training_dataset_name, featurestore=None, training_dataset_version=1,
-                                            figsize=(16,12), cmap="coolwarm", annot=True, fmt=".2f",
+                                            figsize=(16, 12), cmap="coolwarm", annot=True, fmt=".2f",
                                             linewidths=.05, plot=True):
     """
     Visualizes the feature distributions (if they have been computed) for a training dataset in the featurestore
@@ -1651,7 +1671,7 @@ def visualize_training_dataset_correlations(training_dataset_name, featurestore=
 
 
 def visualize_training_dataset_clusters(training_dataset_name, featurestore=None, training_dataset_version=1,
-                                        figsize=(16,12), plot=True):
+                                        figsize=(16, 12), plot=True):
     """
     Visualizes the feature clusters (if they have been computed) for a training dataset in the featurestore
 
@@ -1814,7 +1834,8 @@ def get_training_dataset_statistics(training_dataset_name, featurestore=None, tr
         core._get_featurestore_metadata(featurestore, update_cache=True)
         return core._do_get_training_dataset_statistics(training_dataset_name, featurestore, training_dataset_version)
 
-def connect(host, project_name, port = 443):
+
+def connect(host, project_name, port=443):
     """
     Connects to a feature store from a remote environment such as Amazon SageMaker
 
@@ -1826,6 +1847,16 @@ def connect(host, project_name, port = 443):
         :project_name: the name of the project hosting the feature store to be used
         :port: the REST port of the Hopsworks cluster
     """
+    # download certificates from AWS Secret manager to access Hive
+    key_store = util.get_api_key_aws(project_name, 'key-store')
+    util.write_b64_cert_to_bytes(key_store, path='keyStore.jks')
+    print('write key Store')
+    trust_store = util.get_api_key_aws(project_name, 'trust-store')
+    util.write_b64_cert_to_bytes(trust_store, path='trustStore.jks')
+    cert_key = util.get_api_key_aws(project_name, 'cert-key')
+
+    # write env variables
+    os.environ["CERT_KEY"] = cert_key
     os.environ[constants.ENV_VARIABLES.REMOTE_ENV_VAR] = 'True'
     os.environ[constants.ENV_VARIABLES.REST_ENDPOINT_END_VAR] = host + ':' + str(port)
     os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_NAME_ENV_VAR] = project_name
