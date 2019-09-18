@@ -1838,6 +1838,14 @@ def connect(host, project_name, port = 443, region_name = constants.AWS.DEFAULT_
     Returns:
         None
     """
+
+    os.environ[constants.ENV_VARIABLES.REMOTE_ENV_VAR] = 'True'
+    os.environ[constants.ENV_VARIABLES.REST_ENDPOINT_END_VAR] = host + ':' + str(port)
+    os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_NAME_ENV_VAR] = project_name
+    os.environ[constants.ENV_VARIABLES.REGION_NAME_ENV_VAR] = region_name
+    project_info = rest_rpc._get_project_info(project_name)
+    os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_ID_ENV_VAR] = str(project_info['projectId'])
+
     # download certificates from AWS Secret manager to access Hive
     key_store = util.get_api_key_aws(project_name, 'key-store')
     util.write_b64_cert_to_bytes(key_store, path='keyStore.jks')
@@ -1847,12 +1855,7 @@ def connect(host, project_name, port = 443, region_name = constants.AWS.DEFAULT_
 
     # write env variables
     os.environ["CERT_KEY"] = cert_key
-    os.environ[constants.ENV_VARIABLES.REMOTE_ENV_VAR] = 'True'
-    os.environ[constants.ENV_VARIABLES.REST_ENDPOINT_END_VAR] = host + ':' + str(port)
-    os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_NAME_ENV_VAR] = project_name
-    os.environ[constants.ENV_VARIABLES.REGION_NAME_ENV_VAR] = region_name
-    project_info = rest_rpc._get_project_info(project_name)
-    os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_ID_ENV_VAR] = str(project_info['projectId'])
+
 
 
 def sync_hive_table_with_featurestore(featuregroup, description="", featurestore=None,
