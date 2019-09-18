@@ -17,6 +17,7 @@ from hops import hdfs
 from hops import version
 from hops import constants
 import ssl
+from pyhive import hive
 
 # ! Needed for hops library backwards compatability
 try:
@@ -488,6 +489,24 @@ def _find_spark():
 
     """
     return SparkSession.builder.getOrCreate()
+
+def _create_hive_connection(featurestore):
+    """Returns Hive connection
+
+    Args:
+        :featurestore: featurestore to which connection will be established
+    """
+    # get host without port
+    host = os.environ[constants.ENV_VARIABLES.REST_ENDPOINT_END_VAR].split(':')[0]
+    hive_conn = hive.Connection(host=host,
+                                port=9085,
+                                database=featurestore,
+                                auth='CERTIFICATES',
+                                truststore='trustStore.jks',
+                                keystore='keyStore.jks',
+                                keystore_password=os.environ["CERT_KEY"])
+
+    return hive_conn
 
 
 def _parse_rest_error(response_dict):

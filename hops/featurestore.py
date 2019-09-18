@@ -203,6 +203,7 @@ from hops.featurestore_impl.exceptions.exceptions import CouldNotConvertDatafram
     StatisticsComputationError
 import os
 from pyhive import hive
+import pandas as pd
 
 
 def project_featurestore():
@@ -227,7 +228,7 @@ def project_training_datasets_sink():
     return fs_utils._do_get_project_training_datasets_sink()
 
 
-def get_featuregroup(featuregroup, featurestore=None, featuregroup_version=1, dataframe_type="spark", jdbc_args={}):
+def get_featuregroup(featuregroup, featurestore=None, featuregroup_version=1, dataframe_type="pandas", jdbc_args={}):
     """
     Gets a featuregroup from a featurestore as a spark dataframe
 
@@ -255,20 +256,20 @@ def get_featuregroup(featuregroup, featurestore=None, featuregroup_version=1, da
     if featurestore is None:
         featurestore = project_featurestore()
 
-    try: # Try with cached metadata
+    try:  # Try with cached metadata
         return core._do_get_featuregroup(featuregroup,
                                          core._get_featurestore_metadata(featurestore, update_cache=False),
                                          featurestore=featurestore, featuregroup_version=featuregroup_version,
-                                         dataframe_type = dataframe_type, jdbc_args=jdbc_args)
-    except: # Try again after updating the cache
+                                         dataframe_type=dataframe_type, jdbc_args=jdbc_args)
+    except:  # Try again after updating the cache
         return core._do_get_featuregroup(featuregroup,
                                          core._get_featurestore_metadata(featurestore, update_cache=True),
                                          featurestore=featurestore, featuregroup_version=featuregroup_version,
-                                         dataframe_type = dataframe_type, jdbc_args=jdbc_args)
+                                         dataframe_type=dataframe_type, jdbc_args=jdbc_args)
 
 
 def get_feature(feature, featurestore=None, featuregroup=None, featuregroup_version=1, dataframe_type="spark",
-                jdbc_args = {}):
+                jdbc_args={}):
     """
     Gets a particular feature (column) from a featurestore, if no featuregroup is specified it queries
     hopsworks metastore to see if the feature exists in any of the featuregroups in the featurestore.
@@ -358,9 +359,9 @@ def get_features(features, featurestore=None, featuregroups_version_dict={}, joi
                                      join_key=join_key, dataframe_type=dataframe_type, jdbc_args=jdbc_args)
 
 
-def sql(query, featurestore=None, dataframe_type="spark"):
+def sql(query, featurestore=None):
     """
-    Executes a generic SQL query on the featurestore
+    Executes a generic SQL query on the featurestore via pyHive
 
     Example usage:
 
@@ -376,19 +377,25 @@ def sql(query, featurestore=None, dataframe_type="spark"):
         :dataframe_type: the type of the returned dataframe (spark, pandas, python or numpy)
 
     Returns:
-        A dataframe with the query results
-
+        (pandas.DataFrame): A pandas dataframe with the query results
     """
     if featurestore is None:
         featurestore = project_featurestore()
-    spark = util._find_spark()
-    core._verify_hive_enabled(spark)
-    spark.sparkContext.setJobGroup("Running SQL query against feature store",
-                                   "Running query: {} on the featurestore {}".format(query, featurestore))
-    core._use_featurestore(spark, featurestore)
-    result = core._run_and_log_sql(spark, query)
-    spark.sparkContext.setJobGroup("", "")
-    return fs_utils._return_dataframe_type(result, dataframe_type)
+
+    hive_conn = util._create_hive_connection(featurestore)
+    dataframe = core._run_and_log_sql(hive_conn, query)
+
+    return dataframe
+
+    ### old spark code
+    # spark = util._find_spark()
+    # core._verify_hive_enabled(spark)
+    # spark.sparkContext.setJobGroup("Running SQL query against feature store",
+    #                                "Running query: {} on the featurestore {}".format(query, featurestore))
+    # core._use_featurestore(spark, featurestore)
+    # result = core._run_and_log_sql(spark, query)
+    # spark.sparkContext.setJobGroup("", "")
+    # return fs_utils._return_dataframe_type(result, dataframe_type)
 
 
 def insert_into_featuregroup(df, featuregroup, featurestore=None, featuregroup_version=1, mode="append",
@@ -1834,7 +1841,6 @@ def connect(host, project_name, port = 443, region_name = constants.AWS.DEFAULT_
     # download certificates from AWS Secret manager to access Hive
     key_store = util.get_api_key_aws(project_name, 'key-store')
     util.write_b64_cert_to_bytes(key_store, path='keyStore.jks')
-    print('write key Store')
     trust_store = util.get_api_key_aws(project_name, 'trust-store')
     util.write_b64_cert_to_bytes(trust_store, path='trustStore.jks')
     cert_key = util.get_api_key_aws(project_name, 'cert-key')

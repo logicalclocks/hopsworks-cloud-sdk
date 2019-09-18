@@ -342,7 +342,7 @@ def _do_get_storage_connector(storage_connector_name, featurestore):
 
 
 def _do_get_feature(feature, featurestore_metadata, featurestore=None, featuregroup=None, featuregroup_version=1,
-                    dataframe_type="spark", jdbc_args = {}):
+                    dataframe_type="pandas", jdbc_args={}):
     """
     Gets a particular feature (column) from a featurestore, if no featuregroup is specified it queries
     hopsworks metastore to see if the feature exists in any of the featuregroups in the featurestore.
@@ -359,14 +359,16 @@ def _do_get_feature(feature, featurestore_metadata, featurestore=None, featuregr
         :jdbc_args: jdbc arguments for fetching on-demand feature groups (optional)
 
     Returns:
-        A spark dataframe with the feature
+        A pandas dataframe with the feature
 
     """
-    spark = util._find_spark()
-    _verify_hive_enabled(spark)
-    _use_featurestore(spark, featurestore)
-    spark.sparkContext.setJobGroup("Fetching Feature",
-                                   "Getting feature: {} from the featurestore {}".format(feature, featurestore))
+    # spark = util._find_spark()
+    # _verify_hive_enabled(spark)
+    # _use_featurestore(spark, featurestore)
+    # spark.sparkContext.setJobGroup("Fetching Feature",
+    #                                "Getting feature: {} from the featurestore {}".format(feature, featurestore))
+
+    hive = util._create_hive_connection(featurestore)
 
     feature_query = FeatureQuery(feature, featurestore_metadata, featurestore, featuregroup, featuregroup_version)
     logical_query_plan = LogicalQueryPlan(feature_query)
@@ -377,9 +379,8 @@ def _do_get_feature(feature, featurestore_metadata, featurestore=None, featuregr
     _register_on_demand_featuregroups_as_temp_tables(on_demand_featuregroups, featurestore, jdbc_args)
     logical_query_plan.construct_sql()
 
-    result = _run_and_log_sql(spark, logical_query_plan.sql_str)
-    spark.sparkContext.setJobGroup("", "")
-    return fs_utils._return_dataframe_type(result, dataframe_type)
+    dataframe = _run_and_log_sql(hive, logical_query_plan.sql_str)
+    return dataframe
 
 
 def _run_and_log_sql(hive_conn, sql_str):
@@ -394,8 +395,12 @@ def _run_and_log_sql(hive_conn, sql_str):
         :pd.DataFrame: the result of the SQL query as pandas dataframe
     """
     fs_utils._log("Running sql: {}".format(sql_str))
-    return pd.read_sql(sql_str, hive_conn)
+    # ToDo: right now hive connection is closed after every call. Manage connections better in future (pooling)
 
+    dataframe = pd.read_sql(sql_str, hive_conn)
+    hive_conn.close()
+
+    return dataframe
 
 def _write_featuregroup_hive(spark_df, featuregroup, featurestore, featuregroup_version, mode):
     """
@@ -511,7 +516,7 @@ def _do_insert_into_featuregroup(df, featuregroup_name, featurestore_metadata, f
 
 
 def _do_get_features(features, featurestore_metadata, featurestore=None, featuregroups_version_dict={}, join_key=None,
-                     dataframe_type="spark", jdbc_args = {}):
+                     dataframe_type="pandas", jdbc_args={}):
     """
     Gets a list of features (columns) from the featurestore. If no featuregroup is specified it will query hopsworks
     metastore to find where the features are stored.
@@ -527,16 +532,21 @@ def _do_get_features(features, featurestore_metadata, featurestore=None, feature
         :jdbc_args: jdbc arguments for fetching on-demand feature groups (optional)
 
     Returns:
-        A spark dataframe with all the features
+        A pandas dataframe with all the features
 
     """
     if featurestore is None:
         featurestore = fs_utils._do_get_project_featurestore()
-    spark = util._find_spark()
-    _verify_hive_enabled(spark)
-    _use_featurestore(spark, featurestore)
-    spark.sparkContext.setJobGroup("Fetching Features",
-                                   "Getting features: {} from the featurestore {}".format(features, featurestore))
+
+    # old spark code
+
+    # spark = util._find_spark()
+    # _verify_hive_enabled(spark)
+    # _use_featurestore(spark, featurestore)
+    # spark.sparkContext.setJobGroup("Fetching Features",
+    #                                "Getting features: {} from the featurestore {}".format(features, featurestore))
+
+    hive_conn = util._create_hive_connection(featurestore)
 
     features_query = FeaturesQuery(features, featurestore_metadata, featurestore, featuregroups_version_dict, join_key)
     logical_query_plan = LogicalQueryPlan(features_query)
@@ -547,9 +557,9 @@ def _do_get_features(features, featurestore_metadata, featurestore=None, feature
     _register_on_demand_featuregroups_as_temp_tables(on_demand_featuregroups, featurestore, jdbc_args)
     logical_query_plan.construct_sql()
 
-    result = _run_and_log_sql(spark, logical_query_plan.sql_str)
-    spark.sparkContext.setJobGroup("", "")
-    return fs_utils._return_dataframe_type(result, dataframe_type)
+    result = _run_and_log_sql(hive_conn, logical_query_plan.sql_str)
+
+    return result
 
 
 def _delete_table_contents(featurestore, featuregroup, featuregroup_version):
@@ -601,7 +611,7 @@ def _register_on_demand_featuregroups_as_temp_tables(on_demand_featuregroups, fe
                       .format(fg.name, fg.version, fs_utils._get_table_name(fg.name, fg.version)))
 
 
-def _do_get_on_demand_featuregroup(featuregroup, featurestore, jdbc_args = {}):
+def _do_get_on_demand_featuregroup(featuregroup, featurestore, jdbc_args={}):
     """
     Gets an on-demand featuregroup from a featurestore as a spark dataframe. Uses the JDBC connector to connect
     to the storage backend with Spark and then applies the SQL string for the on-demand feature group and return
@@ -674,7 +684,7 @@ def _do_get_on_demand_featuregroup(featuregroup, featurestore, jdbc_args = {}):
 
 
 def _do_get_featuregroup(featuregroup_name, featurestore_metadata, featurestore=None,
-                         featuregroup_version=1, dataframe_type="spark", jdbc_args = {}):
+                         featuregroup_version=1, dataframe_type="pandas", jdbc_args={}):
     """
     Gets a featuregroup from a featurestore as a spark dataframe
 
@@ -694,12 +704,16 @@ def _do_get_featuregroup(featuregroup_name, featurestore_metadata, featurestore=
     if featurestore is None:
         featurestore = fs_utils._do_get_project_featurestore()
     fg = query_planner._find_featuregroup(featurestore_metadata.featuregroups, featuregroup_name, featuregroup_version)
-    spark = util._find_spark()
-    spark.sparkContext.setJobGroup("Fetching Feature group",
-                                   "Getting feature group: {} from the featurestore {}".format(featuregroup_name,
-                                                                                               featurestore))
-    if fg.featuregroup_type == featurestore_metadata.settings.on_demand_featuregroup_type:
-        return _do_get_on_demand_featuregroup(fg, featurestore, jdbc_args)
+
+    ### old spark code ###
+
+    # spark = util._find_spark()
+    # spark.sparkContext.setJobGroup("Fetching Feature group",
+    #                                "Getting feature group: {} from the featurestore {}".format(featuregroup_name,
+    #                                                                                            featurestore))
+    # if fg.featuregroup_type == featurestore_metadata.settings.on_demand_featuregroup_type:
+    #     return _do_get_on_demand_featuregroup(fg, featurestore, jdbc_args)
+
     if fg.featuregroup_type == featurestore_metadata.settings.cached_featuregroup_type:
         return _do_get_cached_featuregroup(featuregroup_name, featurestore, featuregroup_version, dataframe_type)
 
@@ -709,9 +723,9 @@ def _do_get_featuregroup(featuregroup_name, featurestore_metadata, featurestore=
                              featurestore_metadata.settings.cached_featuregroup_type))
 
 
-def _do_get_cached_featuregroup(featuregroup_name, featurestore=None, featuregroup_version=1, dataframe_type="spark"):
+def _do_get_cached_featuregroup(featuregroup_name, featurestore=None, featuregroup_version=1, dataframe_type="pandas"):
     """
-    Gets a cached featuregroup from a featurestore as a spark dataframe
+    Gets a cached featuregroup from a featurestore as a pandas dataframe
 
     Args:
         :featuregroup_name: name of the featuregroup to get
@@ -720,19 +734,23 @@ def _do_get_cached_featuregroup(featuregroup_name, featurestore=None, featuregro
         :dataframe_type: the type of the returned dataframe (spark, pandas, python or numpy)
 
     Returns:
-        a spark dataframe with the contents of the feature group
+        a pandas dataframe with the contents of the feature group
 
     """
-    spark = util._find_spark()
-    _verify_hive_enabled(spark)
-    _use_featurestore(spark, featurestore)
+
+    # spark = util._find_spark()
+    # _verify_hive_enabled(spark)
+    # _use_featurestore(spark, featurestore)
+
+    hive_conn = util._create_hive_connection(featurestore)
+
     featuregroup_query = FeaturegroupQuery(featuregroup_name, featurestore, featuregroup_version)
     logical_query_plan = LogicalQueryPlan(featuregroup_query)
     logical_query_plan.create_logical_plan()
     logical_query_plan.construct_sql()
-    result = _run_and_log_sql(spark, logical_query_plan.sql_str)
-    spark.sparkContext.setJobGroup("", "")
-    return fs_utils._return_dataframe_type(result, dataframe_type)
+    dataframe = _run_and_log_sql(hive_conn, logical_query_plan.sql_str)
+    # spark.sparkContext.setJobGroup("", "")
+    return dataframe
 
 
 def _do_get_training_dataset(training_dataset_name, featurestore_metadata, training_dataset_version=1,
