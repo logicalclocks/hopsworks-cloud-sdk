@@ -1129,7 +1129,7 @@ def get_training_dataset_statistics(training_dataset_name, featurestore=None, tr
         core._get_featurestore_metadata(featurestore, update_cache=True)
         return core._do_get_training_dataset_statistics(training_dataset_name, featurestore, training_dataset_version)
 
-def connect(host, project_name, port = 443, region_name = constants.AWS.DEFAULT_REGION):
+def connect(host, project_name, port = 443, region_name = constants.AWS.DEFAULT_REGION, secrets_store = 'parameterstore'):
     """
     Connects to a feature store from a remote environment such as Amazon SageMaker
 
@@ -1142,6 +1142,7 @@ def connect(host, project_name, port = 443, region_name = constants.AWS.DEFAULT_
         :project_name: the name of the project hosting the feature store to be used
         :port: the REST port of the Hopsworks cluster
         :region_name: The name of the AWS region in which the required secrets are stored
+        :secrets_store: The secrets storage to be used. Either secretsmanager or parameterstore.
 
     Returns:
         None
@@ -1150,16 +1151,17 @@ def connect(host, project_name, port = 443, region_name = constants.AWS.DEFAULT_
     os.environ[constants.ENV_VARIABLES.REST_ENDPOINT_END_VAR] = host + ':' + str(port)
     os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_NAME_ENV_VAR] = project_name
     os.environ[constants.ENV_VARIABLES.REGION_NAME_ENV_VAR] = region_name
+    os.environ[constants.ENV_VARIABLES.API_KEY_ENV_VAR] = util.get_secret(util.project_name(), secrets_store, 'api-key')
     project_info = rest_rpc._get_project_info(project_name)
     os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_ID_ENV_VAR] = str(project_info['projectId'])
 
     # download certificates from AWS Secret manager to access Hive
-    key_store = util._get_api_key(project_name, 'key-store')
+    key_store = util.get_secret(project_name, secrets_store, 'key-store')
     util.write_b64_cert_to_bytes(key_store, path='keyStore.jks')
-    trust_store = util._get_api_key(project_name, 'trust-store')
+    trust_store = util.get_secret(project_name, secrets_store, 'trust-store')
     util.write_b64_cert_to_bytes(trust_store, path='trustStore.jks')
-    cert_key = util._get_api_key(project_name, 'cert-key')
+    cert_key = util.get_secret(project_name, secrets_store, 'cert-key')
 
     # write env variables
-    os.environ["CERT_KEY"] = cert_key
+    os.environ[constants.ENV_VARIABLES.CERT_KEY_ENV_VAR] = cert_key
 
