@@ -1153,15 +1153,14 @@ def connect(host, project_name, port = 443, region_name = constants.AWS.DEFAULT_
     os.environ[constants.ENV_VARIABLES.REGION_NAME_ENV_VAR] = region_name
     os.environ[constants.ENV_VARIABLES.API_KEY_ENV_VAR] = util.get_secret(util.project_name(), secrets_store, 'api-key')
     project_info = rest_rpc._get_project_info(project_name)
-    os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_ID_ENV_VAR] = str(project_info['projectId'])
+    project_id = str(project_info['projectId'])
+    os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_ID_ENV_VAR] = project_id
 
     # download certificates from AWS Secret manager to access Hive
-    key_store = util.get_secret(project_name, secrets_store, 'key-store')
-    util.write_b64_cert_to_bytes(key_store, path='keyStore.jks')
-    trust_store = util.get_secret(project_name, secrets_store, 'trust-store')
-    util.write_b64_cert_to_bytes(trust_store, path='trustStore.jks')
-    cert_key = util.get_secret(project_name, secrets_store, 'cert-key')
+    credentials = rest_rpc._get_credentials(project_id)
+    util.write_b64_cert_to_bytes(str(credentials['kStore']), path='keyStore.jks')
+    util.write_b64_cert_to_bytes(str(credentials['tStore']), path='trustStore.jks')
 
     # write env variables
-    os.environ[constants.ENV_VARIABLES.CERT_KEY_ENV_VAR] = cert_key
+    os.environ[constants.ENV_VARIABLES.CERT_KEY_ENV_VAR] = str(credentials['password'])
 
