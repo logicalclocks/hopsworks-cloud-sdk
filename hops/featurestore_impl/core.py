@@ -176,6 +176,12 @@ def _run_and_log_sql(hive_conn, sql_str):
     # ToDo: right now hive connection is closed after every call. Manage connections better in future (pooling)
 
     dataframe = pd.read_sql(sql_str, hive_conn)
+
+    # pd.read_sql returns columns in table.column format if columns are not specified in SQL query, i.e. SELECT * FROM..
+    # this also occurs when sql query specifies table, i.e. SELECT table1.column1 table2.column2 FROM ... JOIN ...
+    # we want only want hive table column names as dataframe column names
+    dataframe.columns = [column.split('.')[1] if '.' in column else column for column in dataframe.columns]
+
     hive_conn.close()
 
     return dataframe
