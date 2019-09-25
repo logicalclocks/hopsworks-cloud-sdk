@@ -259,6 +259,9 @@ def _do_get_cached_featuregroup(featuregroup_name, featurestore=None, featuregro
         a pandas dataframe with the contents of the feature group
 
     """
+    if featurestore is None:
+        featurestore = fs_utils._do_get_project_featurestore()
+
     hive_conn = util._create_hive_connection(featurestore)
 
     featuregroup_query = FeaturegroupQuery(featuregroup_name, featurestore, featuregroup_version)
