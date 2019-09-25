@@ -17,7 +17,9 @@ setup(
         'numpy',
         'pandas',
         'pyhopshive[thrift]',
-        'boto3>=1.9.226'
+        'boto3>=1.9.226',
+        'SQLAlchemy',
+        'PyMySQL'
     ],
     extras_require={
         'docs': [
