@@ -565,7 +565,7 @@ def get_featuregroup_partitions(featuregroup, featurestore=None, featuregroup_ve
                                                     featurestore, featuregroup_version)
 
 
-def visualize_featuregroup_distributions(featuregroup_name, featurestore=None, featuregroup_version=1, figsize=(16, 12),
+def visualize_featuregroup_distributions(featuregroup_name, featurestore=None, featuregroup_version=1, figsize=None,
                                          color='lightblue', log=False, align="center", plot=True):
     """
     Visualizes the feature distributions (if they have been computed) for a featuregroup in the featurestore

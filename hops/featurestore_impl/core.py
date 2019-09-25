@@ -176,6 +176,12 @@ def _run_and_log_sql(hive_conn, sql_str):
     # ToDo: right now hive connection is closed after every call. Manage connections better in future (pooling)
 
     dataframe = pd.read_sql(sql_str, hive_conn)
+
+    # pd.read_sql returns columns in table.column format if columns are not specified in SQL query, i.e. SELECT * FROM..
+    # this also occurs when sql query specifies table, i.e. SELECT table1.column1 table2.column2 FROM ... JOIN ...
+    # we want only want hive table column names as dataframe column names
+    dataframe.columns = [column.split('.')[1] if '.' in column else column for column in dataframe.columns]
+
     hive_conn.close()
 
     return dataframe
@@ -253,6 +259,9 @@ def _do_get_cached_featuregroup(featuregroup_name, featurestore=None, featuregro
         a pandas dataframe with the contents of the feature group
 
     """
+    if featurestore is None:
+        featurestore = fs_utils._do_get_project_featurestore()
+
     hive_conn = util._create_hive_connection(featurestore)
 
     featuregroup_query = FeaturegroupQuery(featuregroup_name, featurestore, featuregroup_version)
