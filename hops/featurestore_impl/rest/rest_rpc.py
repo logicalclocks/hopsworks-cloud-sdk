@@ -8,17 +8,41 @@ from hops import constants, util
 from hops.exceptions import RestAPIError
 
 
-def _http_get(resource_url, headers=None):
-    method = constants.HTTP_CONFIG.HTTP_GET
-    response = util.send_request(method, resource_url, headers=headers)
+def _http(resource_url, headers=None, method=constants.HTTP_CONFIG.HTTP_GET, data=None):
+    response = util.send_request(
+        method, resource_url, headers=headers, data=data)
     response_object = response.json()
 
     if response.status_code != 200:
-        error_code, error_msg, user_msg = util._parse_rest_error(response_object)
-        raise RestAPIError("Could not fetch feature stores (url: {}), server response: \n " \
+        error_code, error_msg, user_msg = util._parse_rest_error(
+            response_object)
+        raise RestAPIError("Could not execute HTTP request (url: {}), server response: \n "
                            "HTTP code: {}, HTTP reason: {}, error code: {}, error msg: {}, user msg: {}".format(
-            resource_url, response.code, response.reason, error_code, error_msg, user_msg))
+                               resource_url, response.code, response.reason, error_code, error_msg, user_msg))
     return response_object
+
+
+def _get_api_path():
+    return constants.DELIMITERS.SLASH_DELIMITER + constants.REST_CONFIG.HOPSWORKS_REST_RESOURCE \
+        + constants.DELIMITERS.SLASH_DELIMITER + constants.REST_CONFIG.HOPSWORKS_PROJECT_RESOURCE \
+        + constants.DELIMITERS.SLASH_DELIMITER
+
+
+def _get_api_project_path():
+    return _get_api_path() + util.project_id()
+
+
+def _get_api_featurestore_path():
+    return _get_api_project_path() + constants.DELIMITERS.SLASH_DELIMITER \
+        + constants.REST_CONFIG.HOPSWORKS_FEATURESTORES_RESOURCE
+
+
+def _get_api_featurestore_path_name(featurestore):
+    return _get_api_featurestore_path() + constants.DELIMITERS.SLASH_DELIMITER + featurestore
+
+
+def _get_api_featurestore_path_id(featurestore_id):
+    return _get_api_featurestore_path() + constants.DELIMITERS.SLASH_DELIMITER + str(featurestore_id)
 
 
 def _get_featurestores():
@@ -31,11 +55,7 @@ def _get_featurestores():
     Raises:
         :RestAPIError: if there was an error in the REST call to Hopsworks
     """
-    return _http_get(constants.DELIMITERS.SLASH_DELIMITER +
-                     constants.REST_CONFIG.HOPSWORKS_REST_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
-                     constants.REST_CONFIG.HOPSWORKS_PROJECT_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
-                     util.project_id() + constants.DELIMITERS.SLASH_DELIMITER +
-                     constants.REST_CONFIG.HOPSWORKS_FEATURESTORES_RESOURCE)
+    return _http_get(_get_api_featurestore_path())
 
 
 def _get_featurestore_metadata(featurestore):
@@ -52,12 +72,7 @@ def _get_featurestore_metadata(featurestore):
     Raises:
         :RestAPIError: if there was an error in the REST call to Hopsworks
     """
-    return _http_get(constants.DELIMITERS.SLASH_DELIMITER +
-                     constants.REST_CONFIG.HOPSWORKS_REST_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
-                     constants.REST_CONFIG.HOPSWORKS_PROJECT_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
-                     util.project_id() + constants.DELIMITERS.SLASH_DELIMITER +
-                     constants.REST_CONFIG.HOPSWORKS_FEATURESTORES_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
-                     featurestore + constants.DELIMITERS.SLASH_DELIMITER +
+    return _http_get(_get_api_featurestore_path_name(featurestore) + constants.DELIMITERS.SLASH_DELIMITER +
                      constants.REST_CONFIG.HOPSWORKS_FEATURESTORE_METADATA_RESOURCE)
 
 
@@ -95,10 +110,10 @@ def _get_credentials(project_id):
         :RestAPIError: if there was an error in the REST call to Hopsworks
     """
     return _http_get(constants.DELIMITERS.SLASH_DELIMITER +
-                    constants.REST_CONFIG.HOPSWORKS_REST_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
-                    constants.REST_CONFIG.HOPSWORKS_PROJECT_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
-                    project_id + constants.DELIMITERS.SLASH_DELIMITER +
-                    constants.REST_CONFIG.HOPSWORKS_PROJECT_CREDENTIALS_RESOURCE)
+                     constants.REST_CONFIG.HOPSWORKS_REST_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
+                     constants.REST_CONFIG.HOPSWORKS_PROJECT_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
+                     project_id + constants.DELIMITERS.SLASH_DELIMITER +
+                     constants.REST_CONFIG.HOPSWORKS_PROJECT_CREDENTIALS_RESOURCE)
 
 
 def _get_featuregroup_rest(featuregroup_id, featurestore_id):
@@ -115,15 +130,12 @@ def _get_featuregroup_rest(featuregroup_id, featurestore_id):
     Raises:
         :RestAPIError: if there was an error in the REST call to Hopsworks
     """
-    return _http_get(constants.DELIMITERS.SLASH_DELIMITER +
-                    constants.REST_CONFIG.HOPSWORKS_REST_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
-                    constants.REST_CONFIG.HOPSWORKS_PROJECT_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
-                    util.project_id() + constants.DELIMITERS.SLASH_DELIMITER +
-                    constants.REST_CONFIG.HOPSWORKS_FEATURESTORES_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
-                    str(featurestore_id) +
-                    constants.DELIMITERS.SLASH_DELIMITER +
-                    constants.REST_CONFIG.HOPSWORKS_FEATUREGROUPS_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER
-                    + str(featuregroup_id))
+    headers = {
+        constants.HTTP_CONFIG.HTTP_CONTENT_TYPE: constants.HTTP_CONFIG.HTTP_APPLICATION_JSON}
+    return _http_get(_get_api_featurestore_path_id(featurestore_id) +
+                     constants.DELIMITERS.SLASH_DELIMITER +
+                     constants.REST_CONFIG.HOPSWORKS_FEATUREGROUPS_RESOURCE +
+                     constants.DELIMITERS.SLASH_DELIMITER + str(featuregroup_id))
 
 
 def _get_training_dataset_rest(training_dataset_id, featurestore_id):
@@ -140,16 +152,34 @@ def _get_training_dataset_rest(training_dataset_id, featurestore_id):
     Raises:
         :RestAPIError: if there was an error in the REST call to Hopsworks
     """
-    headers = {constants.HTTP_CONFIG.HTTP_CONTENT_TYPE: constants.HTTP_CONFIG.HTTP_APPLICATION_JSON}
-    return _http_get(constants.DELIMITERS.SLASH_DELIMITER +
-                    constants.REST_CONFIG.HOPSWORKS_REST_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
-                    constants.REST_CONFIG.HOPSWORKS_PROJECT_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
-                    util.project_id() + constants.DELIMITERS.SLASH_DELIMITER +
-                    constants.REST_CONFIG.HOPSWORKS_FEATURESTORES_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
-                    str(featurestore_id) +
+    headers = {
+        constants.HTTP_CONFIG.HTTP_CONTENT_TYPE: constants.HTTP_CONFIG.HTTP_APPLICATION_JSON}
+    return _http_get(_get_api_featurestore_path_id(featurestore_id) +
+                     constants.DELIMITERS.SLASH_DELIMITER +
+                     constants.REST_CONFIG.HOPSWORKS_TRAININGDATASETS_RESOURCE +
+                     constants.DELIMITERS.SLASH_DELIMITER
+                     + str(training_dataset_id), headers=headers)
+
+
+def _put_featuregroup_import_job(job_conf):
+    """
+    Makes a REST call to hopsworks to configure a featuregroup import job 
+
+    Args:
+        :job_conf: featuregroup import job configuration 
+
+    Returns:
+        The REST response
+
+    Raises:
+        :RestAPIError: if there was an error in the REST call to Hopsworks
+    """
+    headers = {
+        constants.HTTP_CONFIG.HTTP_CONTENT_TYPE: constants.HTTP_CONFIG.HTTP_APPLICATION_JSON}
+    resource_url = (_get_api_featurestore_path() +
                     constants.DELIMITERS.SLASH_DELIMITER +
-                    constants.REST_CONFIG.HOPSWORKS_TRAININGDATASETS_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER
-                    + str(training_dataset_id), headers)
+                    constants.REST_CONFIG.HOPSWORKS_FEATUREGROUP_IMPORT_RESOURCE)
+    return _http(resource_url, headers=headers, method=constants.HTTP_CONFIG.HTTP_PUT, data=job_conf)
 
 
 def _get_online_featurestore_jdbc_connector_rest(featurestore_id):
@@ -161,11 +191,11 @@ def _get_online_featurestore_jdbc_connector_rest(featurestore_id):
         the http response
     """
     return _http_get(constants.DELIMITERS.SLASH_DELIMITER +
-                    constants.REST_CONFIG.HOPSWORKS_REST_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
-                    constants.REST_CONFIG.HOPSWORKS_PROJECT_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
-                    os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_ID_ENV_VAR] + constants.DELIMITERS.SLASH_DELIMITER +
-                    constants.REST_CONFIG.HOPSWORKS_FEATURESTORES_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
-                    str(featurestore_id) + constants.DELIMITERS.SLASH_DELIMITER +
-                    constants.REST_CONFIG.HOPSWORKS_FEATURESTORES_STORAGE_CONNECTORS_RESOURCE +
-                    constants.DELIMITERS.SLASH_DELIMITER +
-                    constants.REST_CONFIG.HOPSWORKS_ONLINE_FEATURESTORE_STORAGE_CONNECTOR_RESOURCE)
+                     constants.REST_CONFIG.HOPSWORKS_REST_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
+                     constants.REST_CONFIG.HOPSWORKS_PROJECT_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
+                     os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_ID_ENV_VAR] + constants.DELIMITERS.SLASH_DELIMITER +
+                     constants.REST_CONFIG.HOPSWORKS_FEATURESTORES_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
+                     str(featurestore_id) + constants.DELIMITERS.SLASH_DELIMITER +
+                     constants.REST_CONFIG.HOPSWORKS_FEATURESTORES_STORAGE_CONNECTORS_RESOURCE +
+                     constants.DELIMITERS.SLASH_DELIMITER +
+                     constants.REST_CONFIG.HOPSWORKS_ONLINE_FEATURESTORE_STORAGE_CONNECTOR_RESOURCE)

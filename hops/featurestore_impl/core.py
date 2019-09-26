@@ -125,13 +125,15 @@ def _do_get_storage_connector(storage_connector_name, featurestore):
     except:
         try:
             # Retry with updated metadata
-            metadata = _get_featurestore_metadata(featurestore, update_cache=True)
+            metadata = _get_featurestore_metadata(
+                featurestore, update_cache=True)
         except KeyError:
-            storage_connector_names = list(map(lambda sc: sc.name, metadata.storage_connectors))
-            raise StorageConnectorNotFound("Could not find the requested storage connector with name: {} " \
+            storage_connector_names = list(
+                map(lambda sc: sc.name, metadata.storage_connectors))
+            raise StorageConnectorNotFound("Could not find the requested storage connector with name: {} "
                                            ", among the list of available storage connectors: {}".format(
-                storage_connector_name,
-                storage_connector_names))
+                                               storage_connector_name,
+                                               storage_connector_names))
 
 
 def _do_get_feature(feature, featurestore_metadata, featurestore=None, featuregroup=None, featuregroup_version=1,
@@ -159,12 +161,14 @@ def _do_get_feature(feature, featurestore_metadata, featurestore=None, featuregr
     if featurestore is None:
         featurestore = fs_utils._do_get_project_featurestore()
 
-    feature_query = FeatureQuery(feature, featurestore_metadata, featurestore, featuregroup, featuregroup_version)
+    feature_query = FeatureQuery(
+        feature, featurestore_metadata, featurestore, featuregroup, featuregroup_version)
     logical_query_plan = LogicalQueryPlan(feature_query)
     logical_query_plan.create_logical_plan()
     logical_query_plan.construct_sql()
 
-    dataframe = _run_and_log_sql(logical_query_plan.sql_str, featurestore, online)
+    dataframe = _run_and_log_sql(
+        logical_query_plan.sql_str, featurestore, online)
     return dataframe
 
 
@@ -183,7 +187,8 @@ def _run_and_log_sql(sql_str, featurestore, online=False):
     if not online:
         hive_conn = None
         try:
-            fs_utils._log("Running sql: {} against the offline feature store".format(sql_str))
+            fs_utils._log(
+                "Running sql: {} against the offline feature store".format(sql_str))
             hive_conn = util._create_hive_connection(featurestore)
             dataframe = pd.read_sql(sql_str, hive_conn)
         finally:
@@ -192,13 +197,20 @@ def _run_and_log_sql(sql_str, featurestore, online=False):
     else:
         connection = None
         try:
-            fs_utils._log("Running sql: {} against online feature store".format(sql_str))
-            metadata = _get_featurestore_metadata(featurestore, update_cache=False)
-            storage_connector = _do_get_online_featurestore_connector(featurestore, metadata)
-            pw, user = _get_online_feature_store_password_and_user(storage_connector)
-            parsed = urllib.parse.urlparse(urllib.parse.urlparse(storage_connector.connection_string).path)
-            db_connection_str = 'mysql+pymysql://' + user + ':' + pw + '@' + parsed.netloc + parsed.path
-            engine = sqlalchemy.create_engine(db_connection_str, poolclass=NullPool)
+            fs_utils._log(
+                "Running sql: {} against online feature store".format(sql_str))
+            metadata = _get_featurestore_metadata(
+                featurestore, update_cache=False)
+            storage_connector = _do_get_online_featurestore_connector(
+                featurestore, metadata)
+            pw, user = _get_online_feature_store_password_and_user(
+                storage_connector)
+            parsed = urllib.parse.urlparse(urllib.parse.urlparse(
+                storage_connector.connection_string).path)
+            db_connection_str = 'mysql+pymysql://' + user + \
+                ':' + pw + '@' + parsed.netloc + parsed.path
+            engine = sqlalchemy.create_engine(
+                db_connection_str, poolclass=NullPool)
             db_connection = engine.connect()
             dataframe = pd.read_sql(sql_str, con=db_connection)
         finally:
@@ -208,7 +220,8 @@ def _run_and_log_sql(sql_str, featurestore, online=False):
     # pd.read_sql returns columns in table.column format if columns are not specified in SQL query, i.e. SELECT * FROM..
     # this also occurs when sql query specifies table, i.e. SELECT table1.column1 table2.column2 FROM ... JOIN ...
     # we want only want hive table column names as dataframe column names
-    dataframe.columns = [column.split('.')[1] if '.' in column else column for column in dataframe.columns]
+    dataframe.columns = [column.split(
+        '.')[1] if '.' in column else column for column in dataframe.columns]
 
     return dataframe
 
@@ -237,7 +250,8 @@ def _do_get_features(features, featurestore_metadata, featurestore=None, feature
     if featurestore is None:
         featurestore = fs_utils._do_get_project_featurestore()
 
-    features_query = FeaturesQuery(features, featurestore_metadata, featurestore, featuregroups_version_dict, join_key)
+    features_query = FeaturesQuery(
+        features, featurestore_metadata, featurestore, featuregroups_version_dict, join_key)
     logical_query_plan = LogicalQueryPlan(features_query)
     logical_query_plan.create_logical_plan()
     logical_query_plan.construct_sql()
@@ -266,13 +280,14 @@ def _do_get_featuregroup(featuregroup_name, featurestore_metadata, featurestore=
     """
     if featurestore is None:
         featurestore = fs_utils._do_get_project_featurestore()
-    fg = query_planner._find_featuregroup(featurestore_metadata.featuregroups, featuregroup_name, featuregroup_version)
+    fg = query_planner._find_featuregroup(
+        featurestore_metadata.featuregroups, featuregroup_name, featuregroup_version)
 
     if fg.featuregroup_type == featurestore_metadata.settings.cached_featuregroup_type:
         return _do_get_cached_featuregroup(featuregroup_name, featurestore, featuregroup_version, online)
 
     raise ValueError("The feature group type: "
-                     + fg.featuregroup_type + " was not recognized. Recognized types include: {} and {}" \
+                     + fg.featuregroup_type + " was not recognized. Recognized types include: {} and {}"
                      .format(featurestore_metadata.settings.on_demand_featuregroup_type,
                              featurestore_metadata.settings.cached_featuregroup_type))
 
@@ -296,11 +311,13 @@ def _do_get_cached_featuregroup(featuregroup_name, featurestore=None, featuregro
     if featurestore is None:
         featurestore = fs_utils._do_get_project_featurestore()
 
-    featuregroup_query = FeaturegroupQuery(featuregroup_name, featurestore, featuregroup_version)
+    featuregroup_query = FeaturegroupQuery(
+        featuregroup_name, featurestore, featuregroup_version)
     logical_query_plan = LogicalQueryPlan(featuregroup_query)
     logical_query_plan.create_logical_plan()
     logical_query_plan.construct_sql()
-    dataframe = _run_and_log_sql(logical_query_plan.sql_str, featurestore=featurestore, online=online)
+    dataframe = _run_and_log_sql(
+        logical_query_plan.sql_str, featurestore=featurestore, online=online)
     return dataframe
 
 
@@ -327,7 +344,7 @@ def _get_training_dataset_id(featurestore, training_dataset_name, training_datas
             return td.id
     raise TrainingDatasetNotFound("The training dataset {} with version: {} "
                                   "was not found in the feature store {}".format(
-        training_dataset_name, training_dataset_version, featurestore))
+                                      training_dataset_name, training_dataset_version, featurestore))
 
 
 def _do_get_training_datasets(featurestore_metadata):
@@ -360,7 +377,6 @@ def _do_get_storage_connectors(featurestore_metadata):
     return list(map(lambda sc: (sc.name, sc.type), featurestore_metadata.storage_connectors.values()))
 
 
-
 def _do_get_training_dataset_path(training_dataset_name, featurestore_metadata, training_dataset_version=1):
     """
     Gets the HDFS path to a training dataset with a specific name and version in a featurestore
@@ -377,7 +393,7 @@ def _do_get_training_dataset_path(training_dataset_name, featurestore_metadata, 
                                                             training_dataset_name,
                                                             training_dataset_version)
     hdfs_path = training_dataset.hopsfs_training_dataset.hdfs_store_path + \
-                constants.DELIMITERS.SLASH_DELIMITER + training_dataset.name
+        constants.DELIMITERS.SLASH_DELIMITER + training_dataset.name
     data_format = training_dataset.data_format
     if data_format == constants.FEATURE_STORE.TRAINING_DATASET_NPY_FORMAT:
         hdfs_path = hdfs_path + constants.FEATURE_STORE.TRAINING_DATASET_NPY_SUFFIX
@@ -406,7 +422,8 @@ def _do_get_featuregroup_partitions(featuregroup_name, featurestore_metadata, fe
      Returns:
         a dataframe with the partitions of the featuregroup
      """
-    fg = query_planner._find_featuregroup(featurestore_metadata.featuregroups, featuregroup_name, featuregroup_version)
+    fg = query_planner._find_featuregroup(
+        featurestore_metadata.featuregroups, featuregroup_name, featuregroup_version)
     if fg.featuregroup_type == featurestore_metadata.settings.on_demand_featuregroup_type:
         raise CannotGetPartitionsOfOnDemandFeatureGroup("The feature group with name: {} , and version: {} "
                                                         "is an on-demand feature group. "
@@ -414,7 +431,8 @@ def _do_get_featuregroup_partitions(featuregroup_name, featurestore_metadata, fe
                                                         "cached feature groups."
                                                         .format(featuregroup_name, featuregroup_version))
 
-    sql_str = "SHOW PARTITIONS " + fs_utils._get_table_name(featuregroup_name, featuregroup_version)
+    sql_str = "SHOW PARTITIONS " + \
+        fs_utils._get_table_name(featuregroup_name, featuregroup_version)
     result = _run_and_log_sql(sql_str, featurestore, online)
     return result
 
@@ -520,7 +538,8 @@ def _do_visualize_featuregroup_clusters(featuregroup_name, featurestore=None, fe
                                          "feature clusters have not been computed for this featuregroup."
                                          " To compute the feature clusters, call "
                                          "featurestore.update_featuregroup_stats(featuregroup_name)")
-    fig = statistics_plots._visualize_feature_clusters(stats.cluster_analysis, figsize=figsize)
+    fig = statistics_plots._visualize_feature_clusters(
+        stats.cluster_analysis, figsize=figsize)
     return fig
 
 
@@ -551,7 +570,8 @@ def _do_visualize_featuregroup_descriptive_stats(featuregroup_name, featurestore
                                                "descriptive statistics have not been computed for this featuregroup."
                                                " To compute the descriptive statistics, call "
                                                "featurestore.update_featuregroup_stats(featuregroup_name)")
-    df = statistics_plots._visualize_descriptive_stats(stats.descriptive_stats.descriptive_stats)
+    df = statistics_plots._visualize_descriptive_stats(
+        stats.descriptive_stats.descriptive_stats)
     return df
 
 
@@ -658,7 +678,8 @@ def _do_visualize_training_dataset_clusters(training_dataset_name, featurestore=
                                          "feature clusters have not been computed for this training dataset."
                                          " To compute the feature clusters, call "
                                          "featurestore.update_training_dataset_stats(training_dataset_name)")
-    fig = statistics_plots._visualize_feature_clusters(stats.cluster_analysis, figsize=figsize)
+    fig = statistics_plots._visualize_feature_clusters(
+        stats.cluster_analysis, figsize=figsize)
     return fig
 
 
@@ -689,7 +710,8 @@ def _do_visualize_training_dataset_descriptive_stats(training_dataset_name, feat
                                                "descriptive statistics have not been computed for this training dataset."
                                                " To compute the descriptive statistics, call "
                                                "featurestore.update_training_dataset_stats(training_dataset_name)")
-    df = statistics_plots._visualize_descriptive_stats(stats.descriptive_stats.descriptive_stats)
+    df = statistics_plots._visualize_descriptive_stats(
+        stats.descriptive_stats.descriptive_stats)
     return df
 
 
@@ -705,14 +727,20 @@ def _do_get_featuregroup_statistics(featuregroup_name, featurestore=None, featur
     Returns:
           A Statistics Object
     """
-    featuregroup_id = _get_featuregroup_id(featurestore, featuregroup_name, featuregroup_version)
+    featuregroup_id = _get_featuregroup_id(
+        featurestore, featuregroup_name, featuregroup_version)
     featurestore_id = _get_featurestore_id(featurestore)
-    response_object = rest_rpc._get_featuregroup_rest(featuregroup_id, featurestore_id)
+    response_object = rest_rpc._get_featuregroup_rest(
+        featuregroup_id, featurestore_id)
     # .get() returns None if key dont exists intead of exception
-    descriptive_stats_json = response_object.get(constants.REST_CONFIG.JSON_FEATUREGROUP_DESC_STATS)
-    correlation_matrix_json = response_object.get(constants.REST_CONFIG.JSON_FEATUREGROUP_FEATURE_CORRELATION)
-    features_histogram_json = response_object.get(constants.REST_CONFIG.JSON_FEATUREGROUP_FEATURES_HISTOGRAM)
-    feature_clusters = response_object.get(constants.REST_CONFIG.JSON_FEATUREGROUP_FEATURES_CLUSTERS)
+    descriptive_stats_json = response_object.get(
+        constants.REST_CONFIG.JSON_FEATUREGROUP_DESC_STATS)
+    correlation_matrix_json = response_object.get(
+        constants.REST_CONFIG.JSON_FEATUREGROUP_FEATURE_CORRELATION)
+    features_histogram_json = response_object.get(
+        constants.REST_CONFIG.JSON_FEATUREGROUP_FEATURES_HISTOGRAM)
+    feature_clusters = response_object.get(
+        constants.REST_CONFIG.JSON_FEATUREGROUP_FEATURES_CLUSTERS)
     return Statistics(descriptive_stats_json, correlation_matrix_json, features_histogram_json, feature_clusters)
 
 
@@ -728,14 +756,20 @@ def _do_get_training_dataset_statistics(training_dataset_name, featurestore=None
     Returns:
           A Statistics Object
     """
-    training_dataset_id = _get_training_dataset_id(featurestore, training_dataset_name, training_dataset_version)
+    training_dataset_id = _get_training_dataset_id(
+        featurestore, training_dataset_name, training_dataset_version)
     featurestore_id = _get_featurestore_id(featurestore)
-    response_object = rest_rpc._get_training_dataset_rest(training_dataset_id, featurestore_id)
+    response_object = rest_rpc._get_training_dataset_rest(
+        training_dataset_id, featurestore_id)
     # .get() returns None if key dont exists intead of exception
-    descriptive_stats_json = response_object.get(constants.REST_CONFIG.JSON_FEATUREGROUP_DESC_STATS)
-    correlation_matrix_json = response_object.get(constants.REST_CONFIG.JSON_FEATUREGROUP_FEATURE_CORRELATION)
-    features_histogram_json = response_object.get(constants.REST_CONFIG.JSON_FEATUREGROUP_FEATURES_HISTOGRAM)
-    feature_clusters = response_object.get(constants.REST_CONFIG.JSON_FEATUREGROUP_FEATURES_CLUSTERS)
+    descriptive_stats_json = response_object.get(
+        constants.REST_CONFIG.JSON_FEATUREGROUP_DESC_STATS)
+    correlation_matrix_json = response_object.get(
+        constants.REST_CONFIG.JSON_FEATUREGROUP_FEATURE_CORRELATION)
+    features_histogram_json = response_object.get(
+        constants.REST_CONFIG.JSON_FEATUREGROUP_FEATURES_HISTOGRAM)
+    feature_clusters = response_object.get(
+        constants.REST_CONFIG.JSON_FEATUREGROUP_FEATURES_CLUSTERS)
     return Statistics(descriptive_stats_json, correlation_matrix_json, features_histogram_json, feature_clusters)
 
 
@@ -753,12 +787,18 @@ def _do_get_online_featurestore_connector(featurestore, featurestore_metadata):
     if featurestore_metadata is not None and featurestore_metadata.online_featurestore_connector is not None:
         return featurestore_metadata.online_featurestore_connector
     else:
-        response_object = rest_rpc._get_online_featurestore_jdbc_connector_rest(featurestore_id)
+        response_object = rest_rpc._get_online_featurestore_jdbc_connector_rest(
+            featurestore_id)
         return JDBCStorageConnector(response_object)
+
+
+def _do_import_featuregroup(job_conf):
+    return rest_rpc._put_featuregroup_import_job(job_conf)
 
 
 # Fetch on-load and cache it on the client
 try:
-    metadata_cache = _get_featurestore_metadata(featurestore=fs_utils._do_get_project_featurestore())
+    metadata_cache = _get_featurestore_metadata(
+        featurestore=fs_utils._do_get_project_featurestore())
 except:
     pass
