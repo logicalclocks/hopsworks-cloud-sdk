@@ -133,6 +133,49 @@ def _get_project_info(project_name):
     return response_object
 
 
+def _get_credentials(project_id):
+    """
+    Makes a REST call to hopsworks for getting the project user certificates needed to connect to services such as Hive
+
+    Args:
+        :project_name: id of the project
+
+    Returns:
+        JSON response
+
+    Raises:
+        :RestAPIError: if there was an error in the REST call to Hopsworks
+    """
+    method = constants.HTTP_CONFIG.HTTP_GET
+    connection = util._get_http_connection(https=True)
+    resource_url = (constants.DELIMITERS.SLASH_DELIMITER +
+                    constants.REST_CONFIG.HOPSWORKS_REST_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
+                    constants.REST_CONFIG.HOPSWORKS_PROJECT_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
+                    project_id + constants.DELIMITERS.SLASH_DELIMITER +
+                    constants.REST_CONFIG.HOPSWORKS_PROJECT_CREDENTIALS_RESOURCE)
+    response = util.send_request(connection, method, resource_url)
+    resp_body = response.read().decode('utf-8')
+    response_object = json.loads(resp_body)
+    # for python 3
+    if sys.version_info > (3, 0):
+        if response.code != 200:
+            error_code, error_msg, user_msg = util._parse_rest_error(response_object)
+            raise RestAPIError("Could not fetch credentials for project: {} (url: {}), "
+                                 "server response: \n "
+                                 "HTTP code: {}, HTTP reason: {}, error code: {}, "
+                                 "error msg: {}, user msg: {}".format(
+                project_id, resource_url, response.code, response.reason, error_code, error_msg, user_msg))
+    else:  # for python 2
+        if response.status != 200:
+            error_code, error_msg, user_msg = util._parse_rest_error(response_object)
+            raise RestAPIError("Could not fetch credentials for project: {} (url: {}), "
+                                 "server response: \n " \
+                                 "HTTP code: {}, HTTP reason: {}, error code: {}, "
+                                 "error msg: {}, user msg: {}".format(
+                project_id, resource_url, response.status, response.reason, error_code, error_msg, user_msg))
+    return response_object
+
+
 def _get_featuregroup_rest(featuregroup_id, featurestore_id):
     """
     Makes a REST call to hopsworks for getting the metadata of a particular featuregroup (including the statistics)
