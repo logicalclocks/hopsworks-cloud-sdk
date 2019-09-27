@@ -199,3 +199,23 @@ def _get_online_featurestore_jdbc_connector_rest(featurestore_id):
                  constants.REST_CONFIG.HOPSWORKS_FEATURESTORES_STORAGE_CONNECTORS_RESOURCE +
                  constants.DELIMITERS.SLASH_DELIMITER +
                  constants.REST_CONFIG.HOPSWORKS_ONLINE_FEATURESTORE_STORAGE_CONNECTOR_RESOURCE)
+
+
+def _put_trainingdataset_create_job(job_conf):
+    """
+    Makes a REST call to hopsworks to configure a training dataset creation job
+
+    Args:
+        :job_conf: training dataset creation job configuration
+
+    Returns:
+        The REST response
+
+    Raises:
+        :RestAPIError: if there was an error in the REST call to Hopsworks
+    """
+    headers = {constants.HTTP_CONFIG.HTTP_CONTENT_TYPE: constants.HTTP_CONFIG.HTTP_APPLICATION_JSON}
+    resource_url = (_get_api_featurestore_path() +
+                    constants.DELIMITERS.SLASH_DELIMITER +
+                    constants.REST_CONFIG.HOPSWORKS_TRAININGDATASETS_CREATION_RESOURCE)
+    return _http(resource_url, method = constants.HTTP_CONFIG.HTTP_POST, headers=headers, data=job_conf)
