@@ -301,3 +301,44 @@ def _get_online_featurestore_jdbc_connector_rest(featurestore_id):
                                "HTTP code: {}, HTTP reason: {}, error code: {}, error msg: {}, user msg: {}".format(
                 resource_url, response.code, response.reason, error_code, error_msg, user_msg))
     return response_object
+
+
+def _put_trainingdataset_creation_job(job_conf):
+    """
+    Makes a REST call to hopsworks to configure a training dataset creation job
+
+    Args:
+        :job_conf: training dataset creation job configuration
+
+    Returns:
+        The REST response
+
+    Raises:
+        :RestAPIError: if there was an error in the REST call to Hopsworks
+    """
+    headers = {
+        constants.HTTP_CONFIG.HTTP_CONTENT_TYPE: constants.HTTP_CONFIG.HTTP_APPLICATION_JSON}
+    method = constants.HTTP_CONFIG.HTTP_POST
+    connection = util._get_http_connection(https=True)
+    resource_url = (_get_api_featurestore_path_id(core._get_featurestore_id(job_conf['featurestore'])) +
+                    constants.DELIMITERS.SLASH_DELIMITER +
+                    constants.REST_CONFIG.HOPSWORKS_TRAININGDATASETS_CREATION_RESOURCE)
+    response = util.send_request(
+        connection, method, resource_url, body=job_conf, headers=headers)
+    resp_body = response.read().decode('utf-8')
+    response_object = json.loads(resp_body)
+    try:  # for python 3
+        if ((response.code // 100) != 2):
+            error_code, error_msg, user_msg = util._parse_rest_error(
+                response_object)
+            raise RestAPIError("Could not upload featuregroup import job configuration (url: {}), server response: \n "
+                               "HTTP code: {}, HTTP reason: {}, error code: {}, error msg: {}, user msg: {}".format(
+                                    resource_url, response.code, response.reason, error_code, error_msg, user_msg))
+    except:  # for python 2
+        if ((response.status // 100) != 2):
+            error_code, error_msg, user_msg = util._parse_rest_error(
+                response_object)
+            raise RestAPIError("Could not upload featuregroup import job configuration (url: {}), server response: \n "
+                            "HTTP code: {}, HTTP reason: {}, error code: {}, error msg: {}, user msg: {}".format(
+                resource_url, response.status, response.reason, error_code, error_msg, user_msg))
+    return response_object

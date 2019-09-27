@@ -757,6 +757,23 @@ def _do_get_online_featurestore_connector(featurestore, featurestore_metadata):
         return JDBCStorageConnector(response_object)
 
 
+def _do_trainingdataset_create(job_conf):
+    """
+    Creates a job with `job_conf` through a REST call to create a training
+    dataset.
+
+    Args:
+        :job_conf: training dataset creation job configuration
+
+    Returns:
+        The REST response
+
+    Raises:
+        :RestAPIError: if there was an error in the REST call to Hopsworks
+    """
+    return rest_rpc._put_trainingdataset_create_job(job_conf)
+
+
 # Fetch on-load and cache it on the client
 try:
     metadata_cache = _get_featurestore_metadata(featurestore=fs_utils._do_get_project_featurestore())
