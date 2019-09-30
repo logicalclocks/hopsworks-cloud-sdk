@@ -4,6 +4,7 @@ REST calls to Hopsworks Feature Store Service
 
 import json
 import sys
+import os
 
 from hops import constants, util
 from hops.exceptions import RestAPIError
@@ -261,4 +262,42 @@ def _get_training_dataset_rest(training_dataset_id, featurestore_id):
             raise RestAPIError("Could not get the metadata of featuregroup (url: {}), server response: \n " \
                                "HTTP code: {}, HTTP reason: {}, error code: {}, error msg: {}, user msg: {}".format(
                 resource_url, response.status, response.reason, error_code, error_msg, user_msg))
+    return response_object
+
+
+def _get_online_featurestore_jdbc_connector_rest(featurestore_id):
+    """
+    Makes a REST call to Hopsworks to get the JDBC connection to the online feature store
+    Args:
+        :featurestore_id: the id of the featurestore
+    Returns:
+        the http response
+    """
+    method = constants.HTTP_CONFIG.HTTP_GET
+    connection = util._get_http_connection(https=True)
+    resource_url = (constants.DELIMITERS.SLASH_DELIMITER +
+                    constants.REST_CONFIG.HOPSWORKS_REST_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
+                    constants.REST_CONFIG.HOPSWORKS_PROJECT_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
+                    os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_ID_ENV_VAR] + constants.DELIMITERS.SLASH_DELIMITER +
+                    constants.REST_CONFIG.HOPSWORKS_FEATURESTORES_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
+                    str(featurestore_id) + constants.DELIMITERS.SLASH_DELIMITER +
+                    constants.REST_CONFIG.HOPSWORKS_FEATURESTORES_STORAGE_CONNECTORS_RESOURCE +
+                    constants.DELIMITERS.SLASH_DELIMITER +
+                    constants.REST_CONFIG.HOPSWORKS_ONLINE_FEATURESTORE_STORAGE_CONNECTOR_RESOURCE)
+    response = util.send_request(connection, method, resource_url)
+    resp_body = response.read()
+    response_object = json.loads(resp_body)
+    # for python 3
+    if sys.version_info > (3, 0):
+        if response.code != 200:
+            error_code, error_msg, user_msg = util._parse_rest_error(response_object)
+            raise RestAPIError("Could not fetch feature stores (url: {}), server response: \n " \
+                               "HTTP code: {}, HTTP reason: {}, error code: {}, error msg: {}, user msg: {}".format(
+                resource_url, response.code, response.reason, error_code, error_msg, user_msg))
+    else:  # for python 2
+        if response.status != 200:
+            error_code, error_msg, user_msg = util._parse_rest_error(response_object)
+            raise RestAPIError("Could not fetch feature stores (url: {}), server response: \n " \
+                               "HTTP code: {}, HTTP reason: {}, error code: {}, error msg: {}, user msg: {}".format(
+                resource_url, response.code, response.reason, error_code, error_msg, user_msg))
     return response_object

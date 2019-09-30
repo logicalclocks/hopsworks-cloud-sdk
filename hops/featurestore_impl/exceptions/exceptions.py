@@ -60,3 +60,10 @@ class CannotGetPartitionsOfOnDemandFeatureGroup(Exception):
     This exception will be raised if the user calls featurestore.get_featuregroup_partitions(fg1)
     where fg1 is an on-demand feature group
     """
+
+
+class OnlineFeaturestorePasswordOrUserNotFound(Exception):
+    """
+    This exception will be raised if the user tries to do an operation on the online feature store but a
+    user/password for the online featurestore was not found.
+    """

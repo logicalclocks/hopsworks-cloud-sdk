@@ -134,7 +134,7 @@ def project_featurestore():
     return fs_utils._do_get_project_featurestore()
 
 
-def get_featuregroup(featuregroup, featurestore=None, featuregroup_version=1):
+def get_featuregroup(featuregroup, featurestore=None, featuregroup_version=1, online=False):
     """
     Gets a featuregroup from a featurestore as a pandas dataframe
 
@@ -151,6 +151,8 @@ def get_featuregroup(featuregroup, featurestore=None, featuregroup_version=1):
         :featuregroup: the featuregroup to get
         :featurestore: the featurestore where the featuregroup resides, defaults to the project's featurestore
         :featuregroup_version: the version of the featuregroup, defaults to 1
+        :online: a boolean flag whether to fetch the online feature group or the offline one (assuming that the
+                 feature group has online serving enabled)
 
     Returns:
         a dataframe with the contents of the featuregroup
@@ -162,14 +164,16 @@ def get_featuregroup(featuregroup, featurestore=None, featuregroup_version=1):
     try:  # Try with cached metadata
         return core._do_get_featuregroup(featuregroup,
                                          core._get_featurestore_metadata(featurestore, update_cache=False),
-                                         featurestore=featurestore, featuregroup_version=featuregroup_version)
+                                         featurestore=featurestore, featuregroup_version=featuregroup_version,
+                                         online=online)
     except:  # Try again after updating the cache
         return core._do_get_featuregroup(featuregroup,
                                          core._get_featurestore_metadata(featurestore, update_cache=True),
-                                         featurestore=featurestore, featuregroup_version=featuregroup_version)
+                                         featurestore=featurestore, featuregroup_version=featuregroup_version,
+                                         online=online)
 
 
-def get_feature(feature, featurestore=None, featuregroup=None, featuregroup_version=1):
+def get_feature(feature, featurestore=None, featuregroup=None, featuregroup_version=1, online=False):
     """
     Gets a particular feature (column) from a featurestore, if no featuregroup is specified it queries
     hopsworks metastore to see if the feature exists in any of the featuregroups in the featurestore.
@@ -191,6 +195,8 @@ def get_feature(feature, featurestore=None, featuregroup=None, featuregroup_vers
         :featurestore: the featurestore where the featuregroup resides, defaults to the project's featurestore
         :featuregroup: (Optional) the featuregroup where the feature resides
         :featuregroup_version: the version of the featuregroup, defaults to 1
+        :online: a boolean flag whether to fetch the online feature group or the offline one (assuming that the
+                 feature group has online serving enabled)
 
     Returns:
         A dataframe with the feature
@@ -199,14 +205,14 @@ def get_feature(feature, featurestore=None, featuregroup=None, featuregroup_vers
     try:  # try with cached metadata
         return core._do_get_feature(feature, core._get_featurestore_metadata(featurestore, update_cache=False),
                                     featurestore=featurestore, featuregroup=featuregroup,
-                                    featuregroup_version=featuregroup_version)
+                                    featuregroup_version=featuregroup_version, online=online)
     except:  # Try again after updating cache
         return core._do_get_feature(feature, core._get_featurestore_metadata(featurestore, update_cache=True),
                                     featurestore=featurestore, featuregroup=featuregroup,
-                                    featuregroup_version=featuregroup_version)
+                                    featuregroup_version=featuregroup_version, online=online)
 
 
-def get_features(features, featurestore=None, featuregroups_version_dict={}, join_key=None):
+def get_features(features, featurestore=None, featuregroups_version_dict={}, join_key=None, online=False):
     """
     Gets a list of features (columns) from the featurestore. If no featuregroup is specified it will query hopsworks
     metastore to find where the features are stored. It will try to construct the query first from the cached metadata,
@@ -229,6 +235,8 @@ def get_features(features, featurestore=None, featuregroups_version_dict={}, joi
         :featuregroups: (Optional) a dict with (fg --> version) for all the featuregroups where the features resides
         :featuregroup_version: the version of the featuregroup, defaults to 1
         :join_key: (Optional) column name to join on
+        :online: a boolean flag whether to fetch the online feature group or the offline one (assuming that the
+                 feature group has online serving enabled)
 
     Returns:
         A dataframe with all the features
@@ -240,16 +248,18 @@ def get_features(features, featurestore=None, featuregroups_version_dict={}, joi
                                      core._get_featurestore_metadata(featurestore, update_cache=False),
                                      featurestore=featurestore,
                                      featuregroups_version_dict=featuregroups_version_dict,
-                                     join_key=join_key)
+                                     join_key=join_key,
+                                     online=online)
         # Try again after updating cache
     except:
         return core._do_get_features(features, core._get_featurestore_metadata(featurestore, update_cache=True),
                                      featurestore=featurestore,
                                      featuregroups_version_dict=featuregroups_version_dict,
-                                     join_key=join_key)
+                                     join_key=join_key,
+                                     online=online)
 
 
-def sql(query, featurestore=None):
+def sql(query, featurestore=None, online=False):
     """
     Executes a generic SQL query on the featurestore via pyHive
 
@@ -264,6 +274,8 @@ def sql(query, featurestore=None):
     Args:
         :query: SQL query
         :featurestore: the featurestore to query, defaults to the project's featurestore
+        :online: a boolean flag whether to fetch the online feature group or the offline one (assuming that the
+                 feature group has online serving enabled)
 
     Returns:
         (pandas.DataFrame): A pandas dataframe with the query results
@@ -271,8 +283,7 @@ def sql(query, featurestore=None):
     if featurestore is None:
         featurestore = project_featurestore()
 
-    hive_conn = util._create_hive_connection(featurestore)
-    dataframe = core._run_and_log_sql(hive_conn, query)
+    dataframe = core._run_and_log_sql(query, featurestore, online)
 
     return dataframe
 
@@ -291,6 +302,8 @@ def get_featurestore_metadata(featurestore=None, update_cache=False):
     Args:
         :featurestore: the featurestore to query metadata of
         :update_cache: if true the cache is updated
+        :online: a boolean flag whether to fetch the online feature group or the offline one (assuming that the
+                 feature group has online serving enabled)
 
     Returns:
         A list of featuregroups and their metadata
@@ -301,7 +314,7 @@ def get_featurestore_metadata(featurestore=None, update_cache=False):
     return core._get_featurestore_metadata(featurestore=featurestore, update_cache=update_cache)
 
 
-def get_featuregroups(featurestore=None):
+def get_featuregroups(featurestore=None, online=False):
     """
     Gets a list of all featuregroups in a featurestore, uses the cached metadata.
 
@@ -313,6 +326,7 @@ def get_featuregroups(featurestore=None):
 
     Args:
         :featurestore: the featurestore to list featuregroups for, defaults to the project-featurestore
+        :online: flag whether to filter the featuregroups that have online serving enabled
 
     Returns:
         A list of names of the featuregroups in this featurestore
@@ -322,13 +336,15 @@ def get_featuregroups(featurestore=None):
 
     # Try with the cache first
     try:
-        return fs_utils._do_get_featuregroups(core._get_featurestore_metadata(featurestore, update_cache=False))
+        return fs_utils._do_get_featuregroups(core._get_featurestore_metadata(featurestore, update_cache=False),
+                                              online=online)
     # If it fails, update cache
     except:
-        return fs_utils._do_get_featuregroups(core._get_featurestore_metadata(featurestore, update_cache=True))
+        return fs_utils._do_get_featuregroups(core._get_featurestore_metadata(featurestore, update_cache=True),
+                                                                              online=online)
 
 
-def get_features_list(featurestore=None):
+def get_features_list(featurestore=None, online=False):
     """
     Gets a list of all features in a featurestore, will use the cached featurestore metadata
 
@@ -340,6 +356,7 @@ def get_features_list(featurestore=None):
 
     Args:
         :featurestore: the featurestore to list features for, defaults to the project-featurestore
+        :online: flag whether to filter the features that have online serving enabled
 
     Returns:
         A list of names of the features in this featurestore
@@ -347,9 +364,11 @@ def get_features_list(featurestore=None):
     if featurestore is None:
         featurestore = project_featurestore()
     try:
-        return fs_utils._do_get_features_list(core._get_featurestore_metadata(featurestore, update_cache=False))
+        return fs_utils._do_get_features_list(core._get_featurestore_metadata(featurestore, update_cache=False,),
+                                              online=online)
     except:
-        return fs_utils._do_get_features_list(core._get_featurestore_metadata(featurestore, update_cache=True))
+        return fs_utils._do_get_features_list(core._get_featurestore_metadata(featurestore, update_cache=True,),
+                                              online=online)
 
 
 def get_training_datasets(featurestore=None):
@@ -1164,3 +1183,19 @@ def connect(host, project_name, port = 443, region_name = constants.AWS.DEFAULT_
     # write env variables
     os.environ[constants.ENV_VARIABLES.CERT_KEY_ENV_VAR] = str(credentials['password'])
 
+def get_online_featurestore_connector(featurestore=None):
+    """
+    Gets a JDBC connector for the online feature store
+    Args:
+        :featurestore: the feature store name
+    Returns:
+        a DTO object of the JDBC connector for the online feature store
+    """
+    if featurestore is None:
+        featurestore = project_featurestore()
+    try: # try with metadata cache
+        return core._do_get_online_featurestore_connector(featurestore,
+                                                   core._get_featurestore_metadata(featurestore, update_cache=False))
+    except: # retry with updated metadata
+        return core._do_get_online_featurestore_connector(featurestore,
+                                                   core._get_featurestore_metadata(featurestore, update_cache=True))
