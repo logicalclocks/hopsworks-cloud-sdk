@@ -1150,15 +1150,15 @@ def get_training_dataset_statistics(training_dataset_name, featurestore=None, tr
         return core._do_get_training_dataset_statistics(training_dataset_name, featurestore, training_dataset_version)
 
 
-def import_featuregroup(storage_connector, featuregroup, path=None, primary_key=None, description="", featurestore=None,
+def import_featuregroup_s3(storage_connector, featuregroup, path=None, primary_key=None, description="", featurestore=None,
                         featuregroup_version=1, jobs=[],
                         descriptive_statistics=True, feature_correlation=True,
                         feature_histograms=True, cluster_analysis=True, stat_columns=None, num_bins=20,
-                        corr_method='pearson', num_clusters=5, partition_by=[], data_format="parquet", am_cores=1, am_memory=2048, executor_cores=1, executor_memory=4096):
+                        corr_method='pearson', num_clusters=5, partition_by=[], data_format="parquet", am_cores=1, am_memory=2048, executor_cores=1, executor_memory=4096, max_executors=2):
 
     """
     Creates and triggers a job to import an external dataset of features into a feature group in Hopsworks.
-    This function will read the dataset using spark and a configured storage connector (e.g to an S3 bucket)
+    This function will read the dataset using spark and a configured s3 storage connector 
     and then writes the data to Hopsworks Feature Store (Hive) and registers its metadata.
 
     Example usage:
@@ -1194,11 +1194,74 @@ def import_featuregroup(storage_connector, featuregroup, path=None, primary_key=
         :num_clusters: the number of clusters to use for cluster analysis
         :partition_by: a list of columns to partition_by, defaults to the empty list
         :data_format: the format of the external dataset to read
+        :am_cores: number of cores for the import job's application master
+        :am_memory: ammount of memory for the import job's application master
+        :executor_cores: number of cores for the import job's executors 
+        :executor_memory: ammount of memory for the import job's executors
+        :max_executors: max number of executors to allocate to the spark dinamic app.
 
     Returns:
         None
     """
-    core._do_import_featuregroup(json.dumps(locals()))
+    arguments = locals()
+    arguments['type'] = "s3"
+    core._do_import_featuregroup(json.dumps(arguments))
+    job.launch_job(featuregroup)
+
+def import_featuregroup_redshift(storage_connector, query, featuregroup, primary_key=None, description="",
+                                 featurestore=None, featuregroup_version=1, jobs=[], descriptive_statistics=True,
+                                 feature_correlation=True, feature_histograms=True, cluster_analysis=True,
+                                 stat_columns=None, num_bins=20, corr_method='pearson', num_clusters=5,
+                                 partition_by=[], am_cores=1, am_memory=2048, executor_cores=1, executor_memory=4096, max_executors=2):
+    """
+    Creates and triggers a job to import an external dataset of features into a feature group in Hopsworks.
+    This function will read the dataset using spark and a configured redshift storage connector
+    and then writes the data to Hopsworks Feature Store (Hive) and registers its metadata.
+
+    Example usage:
+    >>> featurestore.import_featuregroup_redshift(my_jdbc_connector_name, sql_query, featuregroup_name)
+    >>> # You can also be explicitly specify featuregroup metadata and what statistics to compute:
+    >>> featurestore.import_featuregroup_redshift(my_jdbc_connector_name, sql_query, featuregroup_name, primary_key="id",
+    >>>                                  description="trx_summary_features without the column count_trx",
+    >>>                                  featurestore=featurestore.project_featurestore(), featuregroup_version=1,
+    >>>                                  jobs=[], descriptive_statistics=False,
+    >>>                                  feature_correlation=False, feature_histograms=False, cluster_analysis=False,
+    >>>                                  stat_columns=None, partition_by=[])
+
+    Args:
+        :storage_connector: the storage connector used to connect to the external storage
+        :query: the queury extracting data from Redshift
+        :featuregroup: name of the featuregroup to import the dataset into the featurestore
+        :primary_key: primary key of the featuregroup
+        :description: metadata description of the feature group to import
+        :featurestore: name of the featurestore database to import the feature group into
+        :featuregroup_version: version of the feature group
+        :jobs: list of Hopsworks jobs linked to the feature group (optional)
+        :descriptive_statistics: a boolean flag whether to compute descriptive statistics (min,max,mean etc) for the
+                                 featuregroup
+        :feature_correlation: a boolean flag whether to compute a feature correlation matrix for the numeric columns in
+                              the featuregroup
+        :feature_histograms: a boolean flag whether to compute histograms for the numeric columns in the featuregroup
+        :cluster_analysis: a boolean flag whether to compute cluster analysis for the numeric columns in the
+                           featuregroup
+        :stat_columns: a list of columns to compute statistics for (defaults to all columns that are numeric)
+        :num_bins: number of bins to use for computing histograms
+        :corr_method: the method to compute feature correlation with (pearson or spearman)
+        :num_clusters: the number of clusters to use for cluster analysis
+        :partition_by: a list of columns to partition_by, defaults to the empty list
+        :am_cores: number of cores for the import job's application master
+        :am_memory: ammount of memory for the import job's application master
+        :executor_cores: number of cores for the import job's executors 
+        :executor_memory: ammount of memory for the import job's executors
+        :max_executors: max number of executors to allocate to the spark dinamic app.
+
+
+    Returns:
+        None
+    """
+    arguments = locals()
+    arguments['type'] = "redshift"
+    core._do_import_featuregroup(json.dumps(arguments))
     job.launch_job(featuregroup)
 
 
