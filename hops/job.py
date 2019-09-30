@@ -16,10 +16,13 @@ EXECUTION_STATE = ("GET", BASE_API +
 
 def launch_job(job_name):
     """
-    Function for launching a job to Hopsworks. 
+    Launch a job in Hopsworks given the job name - the job needs to exists in Hopsworks before launching it.
 
-    :param job_name: Name of the job to be launched in Hopsworks
-    :type job_name: str
+    Args:
+        job_name (str): Name of the job to launch 
+
+    Returns:
+        (str): Json containing Hopsworks response
     """
     headers = {
         constants.HTTP_CONFIG.HTTP_CONTENT_TYPE: constants.HTTP_CONFIG.HTTP_APPLICATION_JSON}
@@ -30,10 +33,13 @@ def launch_job(job_name):
 
 def get_last_execution_info(job_name):
     """
-    Function to get information about the last execution
+    Get information related to the last execution of `job_name`
 
-    :param job_name: Name of the job in Hopsworks
-    :type job_name: str
+    Args:
+        job_name (str): Name of the Hopsworks job to retrieve the last execution 
+
+    Returns:
+        str: Json object containing the information related to the last execution
     """
     method, endpoint = EXECUTION_STATE
     endpoint = endpoint.format(project_id=util.project_id(), job_name=job_name)
