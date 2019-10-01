@@ -4,6 +4,13 @@ hopsworks-cloud-sdk
 
 |Downloads| |PypiStatus| |PythonVersions|
 
+.. |Downloads| image:: https://pepy.tech/badge/hopsworks-cloud-sdk
+   :target: https://pepy.tech/project/hopsworks-cloud-sdk
+.. |PypiStatus| image:: https://img.shields.io/pypi/v/hopsworks-cloud-sdk.svg
+    :target: https://pypi.org/project/hopsworks-cloud-sdk
+.. |PythonVersions| image:: https://img.shields.io/pypi/pyversions/hopsworks-cloud-sdk.svg
+    :target: https://travis-ci.org/hopsworks-cloud-sdk
+
 `hopsworks-cloud-sdk` is an SDK to integrate existing cloud solutions such as Amazon SageMaker our Databricks with the Hopsworks platform.
 
 It enables accessing the Hopsworks feature store from SageMaker and Databricks notebooks.
@@ -12,7 +19,7 @@ It enables accessing the Hopsworks feature store from SageMaker and Databricks n
 Quick Start
 -----------
 
-Ensure that your Hopsworks installation is set up correctly: [Setting up Hopsworks for the cloud](https://hops.readthedocs.io/en/latest/user_guide/hopsworks/featurestore.html#connecting-from-amazon-sagemaker)
+Ensure that your Hopsworks installation is set up correctly: [Setting up Hopsworks for the cloud(https://hops.readthedocs.io/en/latest/user_guide/hopsworks/featurestore.html#connecting-from-amazon-sagemaker)
 
 To Install:
 
@@ -110,18 +117,6 @@ The featurestore serves as a natural interface between data engineering and data
     :align: center
     :scale: 75 %
     :figclass: align-center
-
-References
---------------
-
-- https://github.com/jupyter-incubator/sparkmagic/blob/master/examples/Magics%20in%20IPython%20Kernel.ipynb
-
-.. |Downloads| image:: https://pepy.tech/badge/hopsworks-cloud-sdk
-   :target: https://pepy.tech/project/hopsworks-cloud-sdk
-.. |PypiStatus| image:: https://img.shields.io/pypi/v/hopsworks-cloud-sdk.svg
-    :target: https://pypi.org/project/hopsworks-cloud-sdk
-.. |PythonVersions| image:: https://img.shields.io/pypi/pyversions/hopsworks-cloud-sdk.svg
-    :target: https://travis-ci.org/hopsworks-cloud-sdk
 
 ------------------------
 Development Instructions
