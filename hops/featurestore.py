@@ -1149,16 +1149,16 @@ def get_training_dataset_statistics(training_dataset_name, featurestore=None, tr
         core._get_featurestore_metadata(featurestore, update_cache=True)
         return core._do_get_training_dataset_statistics(training_dataset_name, featurestore, training_dataset_version)
 
-
 def import_featuregroup_s3(storage_connector, featuregroup, path=None, primary_key=None, description="", featurestore=None,
-                        featuregroup_version=1, jobs=[],
-                        descriptive_statistics=True, feature_correlation=True,
+                        featuregroup_version=1, jobs=[], descriptive_statistics=True, feature_correlation=True,
                         feature_histograms=True, cluster_analysis=True, stat_columns=None, num_bins=20,
-                        corr_method='pearson', num_clusters=5, partition_by=[], data_format="parquet", am_cores=1, am_memory=2048, executor_cores=1, executor_memory=4096, max_executors=2):
+                        corr_method='pearson', num_clusters=5, partition_by=[], data_format="parquet",
+                        online=False, online_types=None, offline=True,
+                        am_cores=1, am_memory=2048, executor_cores=1, executor_memory=4096, max_executors=2):
 
     """
     Creates and triggers a job to import an external dataset of features into a feature group in Hopsworks.
-    This function will read the dataset using spark and a configured s3 storage connector 
+    This function will read the dataset using spark and a configured s3 storage connector
     and then writes the data to Hopsworks Feature Store (Hive) and registers its metadata.
 
     Example usage:
@@ -1170,7 +1170,9 @@ def import_featuregroup_s3(storage_connector, featuregroup, path=None, primary_k
     >>>                                  featurestore=featurestore.project_featurestore(),featuregroup_version=1,
     >>>                                  jobs=[], descriptive_statistics=False,
     >>>                                  feature_correlation=False, feature_histograms=False, cluster_analysis=False,
-    >>>                                  stat_columns=None, partition_by=[], data_format="parquet")
+    >>>                                  stat_columns=None, partition_by=[], data_format="parquet", am_cores=1,
+    >>>                                  online=False, online_types=None, offline=True,
+    >>>                                  am_memory=2048, executor_cores=1, executor_memory=4096, max_executors=2)
 
     Args:
         :storage_connector: the storage connector used to connect to the external storage
@@ -1194,9 +1196,14 @@ def import_featuregroup_s3(storage_connector, featuregroup, path=None, primary_k
         :num_clusters: the number of clusters to use for cluster analysis
         :partition_by: a list of columns to partition_by, defaults to the empty list
         :data_format: the format of the external dataset to read
+        :online: boolean flag, if this is set to true, a MySQL table for online feature data will be created in
+                 addition to the Hive table for offline feature data
+        :online_types: a dict with feature_name --> online_type, if a feature is present in this dict,
+                            the online_type will be taken from the dict rather than inferred from the spark dataframe.
+        :offline boolean flag whether to insert the data in the offline version of the featuregroup
         :am_cores: number of cores for the import job's application master
         :am_memory: ammount of memory for the import job's application master
-        :executor_cores: number of cores for the import job's executors 
+        :executor_cores: number of cores for the import job's executors
         :executor_memory: ammount of memory for the import job's executors
         :max_executors: max number of executors to allocate to the spark dinamic app.
 
@@ -1204,7 +1211,7 @@ def import_featuregroup_s3(storage_connector, featuregroup, path=None, primary_k
         None
     """
     arguments = locals()
-    arguments['type'] = "s3"
+    arguments['type'] = "S3"
     core._do_import_featuregroup(json.dumps(arguments))
     job.launch_job(featuregroup)
 
@@ -1212,7 +1219,8 @@ def import_featuregroup_redshift(storage_connector, query, featuregroup, primary
                                  featurestore=None, featuregroup_version=1, jobs=[], descriptive_statistics=True,
                                  feature_correlation=True, feature_histograms=True, cluster_analysis=True,
                                  stat_columns=None, num_bins=20, corr_method='pearson', num_clusters=5,
-                                 partition_by=[], am_cores=1, am_memory=2048, executor_cores=1, executor_memory=4096, max_executors=2):
+                                 partition_by=[], online=False, online_types=None, offline=True,
+                                 am_cores=1, am_memory=2048, executor_cores=1, executor_memory=4096, max_executors=2):
     """
     Creates and triggers a job to import an external dataset of features into a feature group in Hopsworks.
     This function will read the dataset using spark and a configured redshift storage connector
@@ -1226,7 +1234,8 @@ def import_featuregroup_redshift(storage_connector, query, featuregroup, primary
     >>>                                  featurestore=featurestore.project_featurestore(), featuregroup_version=1,
     >>>                                  jobs=[], descriptive_statistics=False,
     >>>                                  feature_correlation=False, feature_histograms=False, cluster_analysis=False,
-    >>>                                  stat_columns=None, partition_by=[])
+    >>>                                  stat_columns=None, partition_by=[], online=False, online_types=None, offline=True,
+    >>>                                  am_cores=1, am_memory=2048, executor_cores=1, executor_memory=4096, max_executors=2)
 
     Args:
         :storage_connector: the storage connector used to connect to the external storage
@@ -1249,9 +1258,14 @@ def import_featuregroup_redshift(storage_connector, query, featuregroup, primary
         :corr_method: the method to compute feature correlation with (pearson or spearman)
         :num_clusters: the number of clusters to use for cluster analysis
         :partition_by: a list of columns to partition_by, defaults to the empty list
+        :online: boolean flag, if this is set to true, a MySQL table for online feature data will be created in
+                 addition to the Hive table for offline feature data
+        :online_types: a dict with feature_name --> online_type, if a feature is present in this dict,
+                            the online_type will be taken from the dict rather than inferred from the spark dataframe.
+        :offline boolean flag whether to insert the data in the offline version of the featuregroup
         :am_cores: number of cores for the import job's application master
         :am_memory: ammount of memory for the import job's application master
-        :executor_cores: number of cores for the import job's executors 
+        :executor_cores: number of cores for the import job's executors
         :executor_memory: ammount of memory for the import job's executors
         :max_executors: max number of executors to allocate to the spark dinamic app.
 
@@ -1260,7 +1274,7 @@ def import_featuregroup_redshift(storage_connector, query, featuregroup, primary
         None
     """
     arguments = locals()
-    arguments['type'] = "redshift"
+    arguments['type'] = "REDSHIFT"
     core._do_import_featuregroup(json.dumps(arguments))
     job.launch_job(featuregroup)
 
