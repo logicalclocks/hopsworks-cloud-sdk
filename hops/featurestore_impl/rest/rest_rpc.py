@@ -320,7 +320,7 @@ def _put_trainingdataset_creation_job(job_conf):
         constants.HTTP_CONFIG.HTTP_CONTENT_TYPE: constants.HTTP_CONFIG.HTTP_APPLICATION_JSON}
     method = constants.HTTP_CONFIG.HTTP_POST
     connection = util._get_http_connection(https=True)
-    resource_url = (_get_api_featurestore_path_id(core._get_featurestore_id(job_conf['featurestore'])) +
+    resource_url = (_get_api_featurestore_path() +
                     constants.DELIMITERS.SLASH_DELIMITER +
                     constants.REST_CONFIG.HOPSWORKS_TRAININGDATASETS_CREATION_RESOURCE)
     response = util.send_request(
