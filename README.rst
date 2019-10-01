@@ -90,22 +90,6 @@ The featurestore serves as a natural interface between data engineering and data
       return dataset
   tf_dataset = create_tf_dataset()
 
-**Integration with PyTorch**:
-
-.. code-block:: python
-
-  from hops import featurestore
-  df_train=...
-  featurestore.create_training_dataset(df_train, "MNIST_train_petastorm", data_format="petastorm")
-
-  from petastorm.pytorch import DataLoader
-  train_dataset_path = featurestore.get_training_dataset_path("MNIST_train_petastorm")
-  device = torch.device('cuda' if use_cuda else 'cpu')
-  with DataLoader(make_reader(train_dataset_path, num_epochs=5, hdfs_driver='libhdfs', batch_size=64) as train_loader:
-          model.train()
-          for batch_idx, row in enumerate(train_loader):
-              data, target = row['image'].to(device), row['digit'].to(device)
-
 **Feature Visualizations**:
 
 .. _feature_plots1.png: imgs/feature_plots1.png
