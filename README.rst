@@ -22,7 +22,7 @@ Quick Start
 Ensure that your Hopsworks installation is set up correctly.
 
 
-[bla](https//hops.readthedocs.io/en/latest/user_guide/hopsworks/featurestore.html#connecting-from-amazon-sagemaker)
+[bla](http://hops.readthedocs.io/en/latest/user_guide/hopsworks/featurestore.html#connecting-from-amazon-sagemaker)
 
 To Install:
 
