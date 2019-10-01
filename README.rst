@@ -12,6 +12,8 @@ It enables accessing the Hopsworks feature store from SageMaker and Databricks n
 Quick Start
 -----------
 
+Ensure that your Hopsworks installation is set up correctly: [Setting up Hopsworks for the cloud](https://hops.readthedocs.io/en/latest/user_guide/hopsworks/featurestore.html#connecting-from-amazon-sagemaker)
+
 To Install:
 
 >>> pip install hopsworks-cloud-sdk
@@ -114,11 +116,11 @@ References
 
 - https://github.com/jupyter-incubator/sparkmagic/blob/master/examples/Magics%20in%20IPython%20Kernel.ipynb
 
-.. |Downloads| image:: https://pepy.tech/badge/hops
+.. |Downloads| image:: https://pepy.tech/badge/hopsworks-cloud-sdk
    :target: https://pepy.tech/project/hopsworks-cloud-sdk
-.. |PypiStatus| image:: https://img.shields.io/pypi/v/hops.svg
+.. |PypiStatus| image:: https://img.shields.io/pypi/v/hopsworks-cloud-sdk.svg
     :target: https://pypi.org/project/hopsworks-cloud-sdk
-.. |PythonVersions| image:: https://img.shields.io/pypi/pyversions/hops.svg
+.. |PythonVersions| image:: https://img.shields.io/pypi/pyversions/hopsworks-cloud-sdk.svg
     :target: https://travis-ci.org/hopsworks-cloud-sdk
 
 ------------------------
