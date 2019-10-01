@@ -22,7 +22,7 @@ Quick Start
 Ensure that your Hopsworks installation is set up correctly.
 
 
-[bla](http://hops.readthedocs.io/en/latest/user_guide/hopsworks/featurestore.html)
+[bla](https://google.com)
 
 To Install:
 
