@@ -1260,3 +1260,4 @@ def create_training_dataset(features, training_dataset, featurestore=None, featu
     job_conf['featuregroups_version_dict'] = json.dumps(job_conf['featuregroups_version_dict'])
     core._do_trainingdataset_create(json.dumps(job_conf))
     job.launch_job(training_dataset)
+    print('Training Dataset job successfully started')
