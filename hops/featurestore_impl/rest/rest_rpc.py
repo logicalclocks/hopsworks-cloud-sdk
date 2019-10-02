@@ -303,7 +303,7 @@ def _get_online_featurestore_jdbc_connector_rest(featurestore_id):
     return response_object
 
 
-def _put_trainingdataset_creation_job(job_conf):
+def _put_trainingdataset_create_job(job_conf):
     """
     Makes a REST call to hopsworks to configure a training dataset creation job
 
