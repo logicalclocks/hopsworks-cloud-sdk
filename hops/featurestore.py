@@ -1204,7 +1204,7 @@ def get_online_featurestore_connector(featurestore=None):
 def create_training_dataset(features, training_dataset, featurestore=None, featuregroups_version_dict={}, join_key=None,
                             description="", data_format="tfrecords", training_dataset_version=1, overwrite=False,
                             jobs=[], descriptive_statistics=True, feature_correlation=True, feature_histograms=True,
-                            cluster_analysis=True, stat_columns=None, num_bins=20, corr_method='pearson',
+                            cluster_analysis=True, stat_columns=[], num_bins=20, corr_method='pearson',
                             num_clusters=5, fixed=True, sink=None, am_cores=1, am_memory=2048, executor_cores=1,
                             executor_memory=4096, max_executors=2):
     """
@@ -1243,7 +1243,7 @@ def create_training_dataset(features, training_dataset, featurestore=None, featu
         :feature_histograms: A boolean flag whether to compute histograms for the numeric columns in the featuregroup. Defaults to True.
         :cluster_analysis: A boolean flag whether to compute cluster analysis for the numeric columns in the
                            featuregroup. Defaults to True.
-        :stat_columns: A list of columns to compute statistics for. Fefaults to all columns that are numeric if `None`.
+        :stat_columns: A list of columns to compute statistics for. Fefaults to all columns that are numeric if `[]`.
         :num_bins: Number of bins to use for computing histograms. Defaults to 20.
         :corr_method: The method to compute feature correlation with (pearson or spearman). Defaults to 'pearson'.
         :num_clusters: Number of clusters to use for cluster analysis. Defaults to 5.
