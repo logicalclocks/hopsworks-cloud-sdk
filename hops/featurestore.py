@@ -1148,7 +1148,8 @@ def get_training_dataset_statistics(training_dataset_name, featurestore=None, tr
         core._get_featurestore_metadata(featurestore, update_cache=True)
         return core._do_get_training_dataset_statistics(training_dataset_name, featurestore, training_dataset_version)
 
-def connect(host, project_name, port = 443, region_name = constants.AWS.DEFAULT_REGION, secrets_store = 'parameterstore'):
+def connect(host, project_name, port = 443, region_name = constants.AWS.DEFAULT_REGION,
+            secrets_store = 'parameterstore', hostname_verification=True):
     """
     Connects to a feature store from a remote environment such as Amazon SageMaker
 
@@ -1162,10 +1163,16 @@ def connect(host, project_name, port = 443, region_name = constants.AWS.DEFAULT_
         :port: the REST port of the Hopsworks cluster
         :region_name: The name of the AWS region in which the required secrets are stored
         :secrets_store: The secrets storage to be used. Either secretsmanager or parameterstore.
+        :hostname_verification: Enable or disable hostname verification
 
     Returns:
         None
     """
+
+    if hostname_verification:
+        os.environ[constants.ENV_VARIABLES.REQUESTS_VERIFY_ENV_VAR] = 'true'
+    else:
+        os.environ[constants.ENV_VARIABLES.REQUESTS_VERIFY_ENV_VAR] = 'false'
 
     os.environ[constants.ENV_VARIABLES.REST_ENDPOINT_END_VAR] = host + ':' + str(port)
     os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_NAME_ENV_VAR] = project_name

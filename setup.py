@@ -19,7 +19,9 @@ setup(
         'pyhopshive[thrift]',
         'boto3>=1.9.226',
         'SQLAlchemy',
-        'PyMySQL'
+        'PyMySQL',
+        'pyopenssl',
+        'idna'
     ],
     extras_require={
         'docs': [
