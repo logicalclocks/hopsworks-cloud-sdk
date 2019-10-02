@@ -1149,10 +1149,8 @@ def get_training_dataset_statistics(training_dataset_name, featurestore=None, tr
         core._get_featurestore_metadata(featurestore, update_cache=True)
         return core._do_get_training_dataset_statistics(training_dataset_name, featurestore, training_dataset_version)
 
-def import_featuregroup_s3(storage_connector, featuregroup, path=None, primary_key=None, description="", featurestore=None,
-                        featuregroup_version=1, jobs=[], descriptive_statistics=True, feature_correlation=True,
-                        feature_histograms=True, cluster_analysis=True, stat_columns=None, num_bins=20,
-                        corr_method='pearson', num_clusters=5, partition_by=[], data_format="parquet",
+def import_featuregroup_s3(storage_connector, featuregroup, path=None, primary_key=None, description="",
+                        featurestore=None, featuregroup_version=1, jobs=[], descriptive_statistics=True, feature_correlation=True, feature_histograms=True, cluster_analysis=True, stat_columns=None, num_bins=20, corr_method='pearson', num_clusters=5, partition_by=[], data_format="parquet",
                         online=False, online_types=None, offline=True,
                         am_cores=1, am_memory=2048, executor_cores=1, executor_memory=4096, max_executors=2):
 
