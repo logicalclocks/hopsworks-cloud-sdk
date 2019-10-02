@@ -13,12 +13,12 @@ def _http(resource_url, headers=None, method=constants.HTTP_CONFIG.HTTP_GET, dat
         method, resource_url, headers=headers, data=data)
     response_object = response.json()
 
-    if response.status_code != 200:
+    if (response.status_code // 100) != 2:
         error_code, error_msg, user_msg = util._parse_rest_error(
             response_object)
         raise RestAPIError("Could not execute HTTP request (url: {}), server response: \n "
                            "HTTP code: {}, HTTP reason: {}, error code: {}, error msg: {}, user msg: {}".format(
-                               resource_url, response.code, response.reason, error_code, error_msg, user_msg))
+                               resource_url, response.status_code, response.reason, error_code, error_msg, user_msg))
     return response_object
 
 
