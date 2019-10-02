@@ -55,7 +55,7 @@ def _get_featurestores():
     Raises:
         :RestAPIError: if there was an error in the REST call to Hopsworks
     """
-    return _http_get(_get_api_featurestore_path())
+    return _http(_get_api_featurestore_path())
 
 
 def _get_featurestore_metadata(featurestore):
@@ -72,8 +72,8 @@ def _get_featurestore_metadata(featurestore):
     Raises:
         :RestAPIError: if there was an error in the REST call to Hopsworks
     """
-    return _http_get(_get_api_featurestore_path_name(featurestore) + constants.DELIMITERS.SLASH_DELIMITER +
-                     constants.REST_CONFIG.HOPSWORKS_FEATURESTORE_METADATA_RESOURCE)
+    return _http(_get_api_featurestore_path_name(featurestore) + constants.DELIMITERS.SLASH_DELIMITER +
+                 constants.REST_CONFIG.HOPSWORKS_FEATURESTORE_METADATA_RESOURCE)
 
 
 def _get_project_info(project_name):
@@ -89,11 +89,11 @@ def _get_project_info(project_name):
     Raises:
         :RestAPIError: if there was an error in the REST call to Hopsworks
     """
-    return _http_get(constants.DELIMITERS.SLASH_DELIMITER +
-                     constants.REST_CONFIG.HOPSWORKS_REST_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
-                     constants.REST_CONFIG.HOPSWORKS_PROJECT_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
-                     constants.REST_CONFIG.HOPSWORKS_PROJECT_INFO_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
-                     project_name)
+    return _http(constants.DELIMITERS.SLASH_DELIMITER +
+                 constants.REST_CONFIG.HOPSWORKS_REST_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
+                 constants.REST_CONFIG.HOPSWORKS_PROJECT_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
+                 constants.REST_CONFIG.HOPSWORKS_PROJECT_INFO_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
+                 project_name)
 
 
 def _get_credentials(project_id):
@@ -109,11 +109,11 @@ def _get_credentials(project_id):
     Raises:
         :RestAPIError: if there was an error in the REST call to Hopsworks
     """
-    return _http_get(constants.DELIMITERS.SLASH_DELIMITER +
-                     constants.REST_CONFIG.HOPSWORKS_REST_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
-                     constants.REST_CONFIG.HOPSWORKS_PROJECT_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
-                     project_id + constants.DELIMITERS.SLASH_DELIMITER +
-                     constants.REST_CONFIG.HOPSWORKS_PROJECT_CREDENTIALS_RESOURCE)
+    return _http(constants.DELIMITERS.SLASH_DELIMITER +
+                 constants.REST_CONFIG.HOPSWORKS_REST_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
+                 constants.REST_CONFIG.HOPSWORKS_PROJECT_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
+                 project_id + constants.DELIMITERS.SLASH_DELIMITER +
+                 constants.REST_CONFIG.HOPSWORKS_PROJECT_CREDENTIALS_RESOURCE)
 
 
 def _get_featuregroup_rest(featuregroup_id, featurestore_id):
@@ -132,10 +132,10 @@ def _get_featuregroup_rest(featuregroup_id, featurestore_id):
     """
     headers = {
         constants.HTTP_CONFIG.HTTP_CONTENT_TYPE: constants.HTTP_CONFIG.HTTP_APPLICATION_JSON}
-    return _http_get(_get_api_featurestore_path_id(featurestore_id) +
-                     constants.DELIMITERS.SLASH_DELIMITER +
-                     constants.REST_CONFIG.HOPSWORKS_FEATUREGROUPS_RESOURCE +
-                     constants.DELIMITERS.SLASH_DELIMITER + str(featuregroup_id))
+    return _http(_get_api_featurestore_path_id(featurestore_id) +
+                 constants.DELIMITERS.SLASH_DELIMITER +
+                 constants.REST_CONFIG.HOPSWORKS_FEATUREGROUPS_RESOURCE +
+                 constants.DELIMITERS.SLASH_DELIMITER + str(featuregroup_id))
 
 
 def _get_training_dataset_rest(training_dataset_id, featurestore_id):
@@ -154,11 +154,11 @@ def _get_training_dataset_rest(training_dataset_id, featurestore_id):
     """
     headers = {
         constants.HTTP_CONFIG.HTTP_CONTENT_TYPE: constants.HTTP_CONFIG.HTTP_APPLICATION_JSON}
-    return _http_get(_get_api_featurestore_path_id(featurestore_id) +
-                     constants.DELIMITERS.SLASH_DELIMITER +
-                     constants.REST_CONFIG.HOPSWORKS_TRAININGDATASETS_RESOURCE +
-                     constants.DELIMITERS.SLASH_DELIMITER
-                     + str(training_dataset_id), headers=headers)
+    return _http(_get_api_featurestore_path_id(featurestore_id) +
+                 constants.DELIMITERS.SLASH_DELIMITER +
+                 constants.REST_CONFIG.HOPSWORKS_TRAININGDATASETS_RESOURCE +
+                 constants.DELIMITERS.SLASH_DELIMITER
+                 + str(training_dataset_id), headers=headers)
 
 
 def _put_featuregroup_import_job(job_conf):
@@ -190,12 +190,12 @@ def _get_online_featurestore_jdbc_connector_rest(featurestore_id):
     Returns:
         the http response
     """
-    return _http_get(constants.DELIMITERS.SLASH_DELIMITER +
-                     constants.REST_CONFIG.HOPSWORKS_REST_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
-                     constants.REST_CONFIG.HOPSWORKS_PROJECT_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
-                     os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_ID_ENV_VAR] + constants.DELIMITERS.SLASH_DELIMITER +
-                     constants.REST_CONFIG.HOPSWORKS_FEATURESTORES_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
-                     str(featurestore_id) + constants.DELIMITERS.SLASH_DELIMITER +
-                     constants.REST_CONFIG.HOPSWORKS_FEATURESTORES_STORAGE_CONNECTORS_RESOURCE +
-                     constants.DELIMITERS.SLASH_DELIMITER +
-                     constants.REST_CONFIG.HOPSWORKS_ONLINE_FEATURESTORE_STORAGE_CONNECTOR_RESOURCE)
+    return _http(constants.DELIMITERS.SLASH_DELIMITER +
+                 constants.REST_CONFIG.HOPSWORKS_REST_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
+                 constants.REST_CONFIG.HOPSWORKS_PROJECT_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
+                 os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_ID_ENV_VAR] + constants.DELIMITERS.SLASH_DELIMITER +
+                 constants.REST_CONFIG.HOPSWORKS_FEATURESTORES_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
+                 str(featurestore_id) + constants.DELIMITERS.SLASH_DELIMITER +
+                 constants.REST_CONFIG.HOPSWORKS_FEATURESTORES_STORAGE_CONNECTORS_RESOURCE +
+                 constants.DELIMITERS.SLASH_DELIMITER +
+                 constants.REST_CONFIG.HOPSWORKS_ONLINE_FEATURESTORE_STORAGE_CONNECTOR_RESOURCE)
