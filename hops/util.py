@@ -102,7 +102,7 @@ def get_requests_verify(hostname, port):
         return false
     """
     if constants.ENV_VARIABLES.REQUESTS_VERIFY_ENV_VAR in os.environ and os.environ[
-        constants.ENV_VARIABLES.REQUESTS_VERIFY_ENV_VAR] == 'true':
+            constants.ENV_VARIABLES.REQUESTS_VERIFY_ENV_VAR] == 'true':
 
         hostname_idna = idna.encode(hostname)
         sock = socket()
@@ -122,8 +122,10 @@ def get_requests_verify(hostname, port):
         sock.close()
 
         try:
-            commonname = crypto_cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
-            issuer = crypto_cert.issuer.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
+            commonname = crypto_cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[
+                0].value
+            issuer = crypto_cert.issuer.get_attributes_for_oid(NameOID.COMMON_NAME)[
+                0].value
             if commonname == issuer and constants.ENV_VARIABLES.DOMAIN_CA_TRUSTSTORE_PEM_ENV_VAR in os.environ:
                 return os.environ[constants.ENV_VARIABLES.DOMAIN_CA_TRUSTSTORE_PEM_ENV_VAR]
             else:
@@ -153,8 +155,13 @@ def send_request(method, resource, data=None, headers=None):
         headers = {}
     global verify
     host, port = _get_host_port_pair()
-    if verify is None:
-        verify = get_requests_verify(host, port)
+    if constants.ENV_VARIABLES.REQUESTS_VERIFY_ENV_VAR in os.environ and \
+       os.environ[constants.ENV_VARIABLES.REQUESTS_VERIFY_ENV_VAR] == 'true':
+        if not verify:
+            verify = get_requests_verify(host, port)
+    else:
+        verify = False
+
     set_auth_header(headers)
     url = _get_hopsworks_rest_endpoint() + resource
     req = requests.Request(method, url, data=data, headers=headers)
