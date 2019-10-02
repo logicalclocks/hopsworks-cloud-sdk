@@ -2,7 +2,6 @@
 REST calls to Hopsworks Feature Store Service
 """
 
-import json
 import os
 
 from hops import constants, util
@@ -11,12 +10,10 @@ from hops.exceptions import RestAPIError
 
 def _http_get(resource_url, headers=None):
     method = constants.HTTP_CONFIG.HTTP_GET
-    connection = util._get_http_connection(https=True)
-    response = util.send_request(connection, method, resource_url, headers=headers)
-    resp_body = response.read().decode('utf-8')
-    response_object = json.loads(resp_body)
+    response = util.send_request(method, resource_url, headers=headers)
+    response_object = response.json()
 
-    if response.code != 200:
+    if response.status_code != 200:
         error_code, error_msg, user_msg = util._parse_rest_error(response_object)
         raise RestAPIError("Could not fetch feature stores (url: {}), server response: \n " \
                            "HTTP code: {}, HTTP reason: {}, error code: {}, error msg: {}, user msg: {}".format(
