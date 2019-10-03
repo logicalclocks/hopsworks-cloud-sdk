@@ -66,21 +66,29 @@ The featurestore serves as a natural interface between data engineering and data
 .. code-block:: python
 
   from hops import featurestore
-  features_df = featurestore.get_features(
-      ["team_budget", "average_attendance", "average_player_age",
+  feature_list = ["team_budget", "average_attendance", "average_player_age",
       "team_position", "sum_attendance",
-       "average_player_rating", "average_player_worth", "sum_player_age",
-       "sum_player_rating", "sum_player_worth", "sum_position",
-       "average_position"
-      ]
+      "average_player_rating", "average_player_worth", "sum_player_age",
+      "sum_player_rating", "sum_player_worth", "sum_position",
+      "average_position"
+    ]
+
+  latest_version = featurestore.get_latest_training_dataset_version("team_position_prediction")
+  featurestore.create_training_dataset(
+      features = feature_list,
+      training_dataset = "team_position_prediction",
+      descriptive_statistics = False,
+      feature_correlation = False,
+      feature_histograms = False,
+      cluster_analysis = False,
+      training_dataset_version = latest_version + 1
   )
-  featurestore.create_training_dataset(features_df, "team_position_prediction", data_format="tfrecords")
 
   def create_tf_dataset():
       dataset_dir = featurestore.get_training_dataset_path("team_position_prediction")
       input_files = tf.gfile.Glob(dataset_dir + "/part-r-*")
       dataset = tf.data.TFRecordDataset(input_files)
-      tf_record_schema = featurestore.get_training_dataset_tf_record_schema("team_position_prediction")
+      tf_record_schema = ... # Add tf schema
       feature_names = ["team_budget", "average_attendance", "average_player_age", "sum_attendance",
            "average_player_rating", "average_player_worth", "sum_player_age", "sum_player_rating", "sum_player_worth",
            "sum_position", "average_position"
@@ -97,6 +105,7 @@ The featurestore serves as a natural interface between data engineering and data
 
       dataset = dataset.map(decode).shuffle(SHUFFLE_BUFFER_SIZE).batch(BATCH_SIZE).repeat(NUM_EPOCHS)
       return dataset
+
   tf_dataset = create_tf_dataset()
 
 **Feature Visualizations**:
