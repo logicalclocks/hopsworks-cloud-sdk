@@ -41,6 +41,7 @@ def project_id():
     """
     return os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_ID_ENV_VAR]
 
+
 def project_name():
     """
     Extracts the project name from the environment
@@ -49,6 +50,7 @@ def project_name():
         project name
     """
     return os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_NAME_ENV_VAR]
+
 
 def _get_hopsworks_rest_endpoint():
     """
@@ -84,7 +86,8 @@ def _get_host_port_pair():
 
 
 def set_auth_header(headers):
-    headers[constants.HTTP_CONFIG.HTTP_AUTHORIZATION] = "ApiKey " + os.environ[constants.ENV_VARIABLES.API_KEY_ENV_VAR]
+    headers[constants.HTTP_CONFIG.HTTP_AUTHORIZATION] = "ApiKey " + \
+        os.environ[constants.ENV_VARIABLES.API_KEY_ENV_VAR]
 
 
 def get_requests_verify(hostname, port):
@@ -99,7 +102,7 @@ def get_requests_verify(hostname, port):
         return false
     """
     if constants.ENV_VARIABLES.REQUESTS_VERIFY_ENV_VAR in os.environ and os.environ[
-        constants.ENV_VARIABLES.REQUESTS_VERIFY_ENV_VAR] == 'true':
+            constants.ENV_VARIABLES.REQUESTS_VERIFY_ENV_VAR] == 'true':
 
         hostname_idna = idna.encode(hostname)
         sock = socket()
@@ -119,8 +122,10 @@ def get_requests_verify(hostname, port):
         sock.close()
 
         try:
-            commonname = crypto_cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
-            issuer = crypto_cert.issuer.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
+            commonname = crypto_cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[
+                0].value
+            issuer = crypto_cert.issuer.get_attributes_for_oid(NameOID.COMMON_NAME)[
+                0].value
             if commonname == issuer and constants.ENV_VARIABLES.DOMAIN_CA_TRUSTSTORE_PEM_ENV_VAR in os.environ:
                 return os.environ[constants.ENV_VARIABLES.DOMAIN_CA_TRUSTSTORE_PEM_ENV_VAR]
             else:
@@ -150,8 +155,13 @@ def send_request(method, resource, data=None, headers=None):
         headers = {}
     global verify
     host, port = _get_host_port_pair()
-    if verify is None:
-        verify = get_requests_verify(host, port)
+    if constants.ENV_VARIABLES.REQUESTS_VERIFY_ENV_VAR in os.environ and \
+       os.environ[constants.ENV_VARIABLES.REQUESTS_VERIFY_ENV_VAR] == 'true':
+        if not verify:
+            verify = get_requests_verify(host, port)
+    else:
+        verify = False
+
     set_auth_header(headers)
     url = _get_hopsworks_rest_endpoint() + resource
     req = requests.Request(method, url, data=data, headers=headers)
@@ -164,6 +174,7 @@ def send_request(method, resource, data=None, headers=None):
         prepped = session.prepare_request(req)
         response = session.send(prepped)
     return response
+
 
 def _create_hive_connection(featurestore):
     """Returns Hive connection
@@ -204,6 +215,7 @@ def _parse_rest_error(response_dict):
         user_msg = response_dict[constants.REST_CONFIG.JSON_USR_MSG]
     return error_code, error_msg, user_msg
 
+
 def get_secret(project_name, secrets_store, secret_key):
     """
     Returns secret value from the AWS Secrets Manager or Parameter Store
@@ -220,7 +232,9 @@ def get_secret(project_name, secrets_store, secret_key):
     elif secrets_store == constants.AWS.PARAMETER_STORE:
         return _query_parameter_store(project_name, secret_key)
     else:
-        raise UnkownSecretStorageError("Secrets storage " + secrets_store + " is not supported.")
+        raise UnkownSecretStorageError(
+            "Secrets storage " + secrets_store + " is not supported.")
+
 
 def _assumed_role():
     client = boto3.client('sts')
@@ -229,8 +243,10 @@ def _assumed_role():
     # arn:aws:sts::123456789012:assumed-role/my-role-name/my-role-session-name
     local_identifier = response['Arn'].split(':')[-1].split('/')
     if len(local_identifier) != 3 or local_identifier[0] != 'assumed-role':
-        raise Exception('Failed to extract assumed role from arn: ' + response['Arn'])
+        raise Exception(
+            'Failed to extract assumed role from arn: ' + response['Arn'])
     return local_identifier[1]
+
 
 def _query_secrets_manager(project_name, secret_key):
     secret_name = 'hopsworks/project/' + project_name + '/role/' + _assumed_role()
@@ -248,10 +264,13 @@ def _query_secrets_manager(project_name, secret_key):
     get_secret_value_response = client.get_secret_value(SecretId=secret_name)
     return json.loads(get_secret_value_response['SecretString'])[secret_key]
 
+
 def _query_parameter_store(project_name, secret_key):
     ssm = boto3.client('ssm')
-    name = '/hopsworks/project/' + project_name + '/role/' + _assumed_role() + '/type/' + secret_key
+    name = '/hopsworks/project/' + project_name + \
+        '/role/' + _assumed_role() + '/type/' + secret_key
     return ssm.get_parameter(Name=name, WithDecryption=True)['Parameter']['Value']
+
 
 def write_b64_cert_to_bytes(b64_string, path):
     """Converts b64 encoded certificate to bytes file .
