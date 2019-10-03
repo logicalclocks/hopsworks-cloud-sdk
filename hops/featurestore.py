@@ -1334,3 +1334,64 @@ def get_online_featurestore_connector(featurestore=None):
     except: # retry with updated metadata
         return core._do_get_online_featurestore_connector(featurestore,
                                                    core._get_featurestore_metadata(featurestore, update_cache=True))
+
+def create_training_dataset(features, training_dataset, featurestore=None, featuregroups_version_dict={}, join_key=None,
+                            description="", data_format="tfrecords", training_dataset_version=1, overwrite=False,
+                            jobs=[], descriptive_statistics=True, feature_correlation=True, feature_histograms=True,
+                            cluster_analysis=True, stat_columns=[], num_bins=20, correlation_method='pearson',
+                            num_clusters=5, fixed=True, sink=None, am_cores=1, am_memory=2048, executor_cores=1,
+                            executor_memory=4096, max_executors=2):
+    """
+    Creates and triggers a job to create a training dataset of features from a featurestore in Hopsworks.
+    The function joins the features on the specified `join_key`, saves metadata about the training dataset to the database
+    and saves the materialized dataset to the storage connector provided in `sink`. A custom sink can be defined, by
+    adding a storage connector in Hopsworks. The job is executed in Spark with a dynamically scaled number of executors
+    up to `max_executors` according to the availability of resources.
+
+    >>> featurestore.create_training_dataset(["feature1", "feature2", "label"], "TestDataset")
+    >>> # You can override the default configuration if necessary:
+    >>> featurestore.create_training_dataset(["feature1", "feature2", "label"], "TestDataset", description="",
+    >>>                                      featurestore=featurestore.project_featurestore(), data_format="csv",
+    >>>                                      training_dataset_version=1,
+    >>>                                      descriptive_statistics=False, feature_correlation=False,
+    >>>                                      feature_histograms=False, cluster_analysis=False, stat_columns=None,
+    >>>                                      sink = "s3_connector")
+
+    Args:
+        :features: A list of features, to be added to the training dataset.
+        :training_dataset: The name of the training dataset.
+        :featurestore: The name of the featurestore that the training dataset is linked to.
+                       Defaults to None, using the project default featurestore.
+        :featuregroups_version_dict: An optional dict with (fg --> version) for all the featuregroups where the features reside.
+                                     Hopsworks will try to infer the featuregroup version from metadata. Defaults to {}.
+        :join_key: (Optional) column name to join on. Defaults to None.
+        :description: A description of the training dataset. Defaults to "".
+        :data_format: The format of the materialized training dataset. Defaults to "tfrecords".
+        :training_dataset_version: The version of the training dataset. Defaults to 1.
+        :overwrite: Boolean to indicate if an existing training dataset with the same version should be overwritten. Defaults to False.
+        :jobs: List of Hopsworks jobs linked to the training dataset. Defaults to [].
+        :descriptive_statistics: A boolean flag whether to compute descriptive statistics (min,max,mean etc)
+                                 for the featuregroup. Defaults to True.
+        :feature_correlation: A boolean flag whether to compute a feature correlation matrix for the numeric columns
+                              in the featuregroup. Defaults to True.
+        :feature_histograms: A boolean flag whether to compute histograms for the numeric columns in the featuregroup. Defaults to True.
+        :cluster_analysis: A boolean flag whether to compute cluster analysis for the numeric columns in the
+                           featuregroup. Defaults to True.
+        :stat_columns: A list of columns to compute statistics for. Fefaults to all columns that are numeric if `[]`.
+        :num_bins: Number of bins to use for computing histograms. Defaults to 20.
+        :correlation_method: The method to compute feature correlation with (pearson or spearman). Defaults to 'pearson'.
+        :num_clusters: Number of clusters to use for cluster analysis. Defaults to 5.
+        :fixed: Boolean flag indicating whether array columns should be treated with fixed size or variable size. Defaults to True.
+        :sink: Name of storage connector to store the training dataset. Defaults to the hdfs connector.
+        :am_cores: Number of cores assigned to the application master of the job. Defaults to 1.
+        :am_memory: Memory in MB assigned to the application master of the job. Defaults to 2048.
+        :executor_cores: Number of cores assigned to each of the executors of the job. Defaults to 1.
+        :executor_memory: Memory in MB assigned to each of the executors of the job. Defaults to 4096.
+        :max_executors: Maximum number of executors assigned to the job.
+    """
+    job_conf = locals()
+    # treat featuregroups_version_dict as string
+    job_conf['featuregroups_version_dict'] = json.dumps(job_conf['featuregroups_version_dict'])
+    core._do_trainingdataset_create(json.dumps(job_conf))
+    job.launch_job(training_dataset)
+    print('Training Dataset job successfully started')

@@ -796,6 +796,23 @@ def _do_import_featuregroup(job_conf):
     return rest_rpc._put_featuregroup_import_job(job_conf)
 
 
+def _do_trainingdataset_create(job_conf):
+    """
+    Creates a job with `job_conf` through a REST call to create a training
+    dataset.
+
+    Args:
+        :job_conf: training dataset creation job configuration
+
+    Returns:
+        The REST response
+
+    Raises:
+        :RestAPIError: if there was an error in the REST call to Hopsworks
+    """
+    return rest_rpc._put_trainingdataset_create_job(job_conf)
+
+
 # Fetch on-load and cache it on the client
 try:
     metadata_cache = _get_featurestore_metadata(
