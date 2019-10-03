@@ -31,6 +31,10 @@ Sample usage:
 >>> featurestore.connect('ec2-w-x-y-z.us-east-2.compute.amazonaws.com', 'my_hopsworks_project')
 >>> features_df = featurestore.get_features(["my_feature_1", "my_feature_2"])
 
+Example notebook:
+
+`Examples for using the cloud SDK on SageMaker <https://nbviewer.jupyter.org/github/logicalclocks/hops-examples/blob/master/notebooks/featurestore/aws/SageMakerFeaturestoreTourPython.ipynb>`_
+
 ------------------------------------
 Documentation
 ------------------------------------
