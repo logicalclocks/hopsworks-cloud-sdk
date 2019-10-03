@@ -1278,7 +1278,7 @@ def import_featuregroup_redshift(storage_connector, query, featuregroup, primary
 
 
 def connect(host, project_name, port = 443, region_name = constants.AWS.DEFAULT_REGION,
-            secrets_store = 'parameterstore', hostname_verification=True):
+            secrets_store = 'parameterstore', hostname_verification=True, trust_store_path=None):
     """
     Connects to a feature store from a remote environment such as Amazon SageMaker
 
@@ -1292,7 +1292,9 @@ def connect(host, project_name, port = 443, region_name = constants.AWS.DEFAULT_
         :port: the REST port of the Hopsworks cluster
         :region_name: The name of the AWS region in which the required secrets are stored
         :secrets_store: The secrets storage to be used. Either secretsmanager or parameterstore.
-        :hostname_verification: Enable or disable hostname verification
+        :hostname_verification: Enable or disable hostname verification. If a self-signed certificate was installed /
+        on Hopsworks then the trust store needs to be supplied using trust_store_path.
+        :trust_store_path: the trust store pem file for Hopsworks needed for self-signed certificates only
 
     Returns:
         None
@@ -1302,6 +1304,11 @@ def connect(host, project_name, port = 443, region_name = constants.AWS.DEFAULT_
         os.environ[constants.ENV_VARIABLES.REQUESTS_VERIFY_ENV_VAR] = 'true'
     else:
         os.environ[constants.ENV_VARIABLES.REQUESTS_VERIFY_ENV_VAR] = 'false'
+
+    if trust_store_path:
+        os.environ[constants.ENV_VARIABLES.DOMAIN_CA_TRUSTSTORE_PEM_ENV_VAR] = trust_store_path
+    else:
+        os.unsetenv(constants.ENV_VARIABLES.DOMAIN_CA_TRUSTSTORE_PEM_ENV_VAR)
 
     os.environ[constants.ENV_VARIABLES.REST_ENDPOINT_END_VAR] = host + ':' + str(port)
     os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_NAME_ENV_VAR] = project_name
