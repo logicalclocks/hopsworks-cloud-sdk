@@ -1299,21 +1299,13 @@ def connect(host, project_name, port = 443, region_name = constants.AWS.DEFAULT_
     Returns:
         None
     """
-
-    if hostname_verification:
-        os.environ[constants.ENV_VARIABLES.REQUESTS_VERIFY_ENV_VAR] = 'true'
-    else:
-        os.environ[constants.ENV_VARIABLES.REQUESTS_VERIFY_ENV_VAR] = 'false'
-
-    if trust_store_path:
-        os.environ[constants.ENV_VARIABLES.DOMAIN_CA_TRUSTSTORE_PEM_ENV_VAR] = trust_store_path
-    else:
-        os.unsetenv(constants.ENV_VARIABLES.DOMAIN_CA_TRUSTSTORE_PEM_ENV_VAR)
-
     os.environ[constants.ENV_VARIABLES.REST_ENDPOINT_END_VAR] = host + ':' + str(port)
     os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_NAME_ENV_VAR] = project_name
     os.environ[constants.ENV_VARIABLES.REGION_NAME_ENV_VAR] = region_name
     os.environ[constants.ENV_VARIABLES.API_KEY_ENV_VAR] = util.get_secret(util.project_name(), secrets_store, 'api-key')
+
+    util.prepare_requests(hostname_verification=hostname_verification, trust_store_path=trust_store_path)
+
     project_info = rest_rpc._get_project_info(project_name)
     project_id = str(project_info['projectId'])
     os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_ID_ENV_VAR] = project_id
