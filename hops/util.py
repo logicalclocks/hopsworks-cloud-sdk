@@ -29,7 +29,7 @@ except:
     pass
 
 verify = None
-session = requests.session()
+session = None
 
 
 def project_id():
@@ -90,7 +90,7 @@ def set_auth_header(headers):
         os.environ[constants.ENV_VARIABLES.API_KEY_ENV_VAR]
 
 
-def get_requests_verify(hostname, port):
+def get_requests_verify(hostname_verification=True, trust_store_path=None):
     """
     Get verification method for sending HTTP requests to Hopsworks.
     Credit to https://gist.github.com/gdamjan/55a8b9eec6cf7b771f92021d93b87b2c
@@ -101,9 +101,8 @@ def get_requests_verify(hostname, port):
             else if hopsworks is not self-signed, return true
         return false
     """
-    if constants.ENV_VARIABLES.REQUESTS_VERIFY_ENV_VAR in os.environ and os.environ[
-            constants.ENV_VARIABLES.REQUESTS_VERIFY_ENV_VAR] == 'true':
-
+    if hostname_verification:
+        hostname, port = _get_host_port_pair()
         hostname_idna = idna.encode(hostname)
         sock = socket()
 
@@ -126,8 +125,8 @@ def get_requests_verify(hostname, port):
                 0].value
             issuer = crypto_cert.issuer.get_attributes_for_oid(NameOID.COMMON_NAME)[
                 0].value
-            if commonname == issuer and constants.ENV_VARIABLES.DOMAIN_CA_TRUSTSTORE_PEM_ENV_VAR in os.environ:
-                return os.environ[constants.ENV_VARIABLES.DOMAIN_CA_TRUSTSTORE_PEM_ENV_VAR]
+            if commonname == issuer and trust_store_path:
+                return trust_store_path
             else:
                 return True
         except x509.ExtensionNotFound:
@@ -135,6 +134,13 @@ def get_requests_verify(hostname, port):
 
     return False
 
+
+def prepare_requests(hostname_verification=True, trust_store_path=None):
+    global verify
+    global session
+    session = requests.session()
+    verify = get_requests_verify(hostname_verification=hostname_verification,
+                                 trust_store_path=trust_store_path)
 
 def send_request(method, resource, data=None, headers=None):
     """
@@ -153,20 +159,11 @@ def send_request(method, resource, data=None, headers=None):
     """
     if headers is None:
         headers = {}
-    global verify
-    host, port = _get_host_port_pair()
-    if constants.ENV_VARIABLES.REQUESTS_VERIFY_ENV_VAR in os.environ and \
-       os.environ[constants.ENV_VARIABLES.REQUESTS_VERIFY_ENV_VAR] == 'true':
-        if not verify:
-            verify = get_requests_verify(host, port)
-    else:
-        verify = False
 
     set_auth_header(headers)
     url = _get_hopsworks_rest_endpoint() + resource
     req = requests.Request(method, url, data=data, headers=headers)
     prepped = session.prepare_request(req)
-
     response = session.send(prepped, verify=verify)
 
     if response.status_code == constants.HTTP_CONFIG.HTTP_UNAUTHORIZED:
