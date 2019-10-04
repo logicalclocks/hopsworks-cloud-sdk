@@ -124,6 +124,9 @@ from hops.featurestore_impl.rest import rest_rpc
 from hops.featurestore_impl.util import fs_utils
 
 
+update_cache_default = True
+
+
 def project_featurestore():
     """
     Gets the project's featurestore name (project_featurestore)
@@ -164,7 +167,8 @@ def get_featuregroup(featuregroup, featurestore=None, featuregroup_version=1, on
 
     try:  # Try with cached metadata
         return core._do_get_featuregroup(featuregroup,
-                                         core._get_featurestore_metadata(featurestore, update_cache=False),
+                                         core._get_featurestore_metadata(featurestore,
+                                                                         update_cache=update_cache_default),
                                          featurestore=featurestore, featuregroup_version=featuregroup_version,
                                          online=online)
     except:  # Try again after updating the cache
@@ -204,7 +208,8 @@ def get_feature(feature, featurestore=None, featuregroup=None, featuregroup_vers
 
     """
     try:  # try with cached metadata
-        return core._do_get_feature(feature, core._get_featurestore_metadata(featurestore, update_cache=False),
+        return core._do_get_feature(feature, core._get_featurestore_metadata(featurestore,
+                                                                             update_cache=update_cache_default),
                                     featurestore=featurestore, featuregroup=featuregroup,
                                     featuregroup_version=featuregroup_version, online=online)
     except:  # Try again after updating cache
@@ -246,7 +251,8 @@ def get_features(features, featurestore=None, featuregroups_version_dict={}, joi
     # try with cached metadata
     try:
         return core._do_get_features(features,
-                                     core._get_featurestore_metadata(featurestore, update_cache=False),
+                                     core._get_featurestore_metadata(featurestore,
+                                                                     update_cache=update_cache_default),
                                      featurestore=featurestore,
                                      featuregroups_version_dict=featuregroups_version_dict,
                                      join_key=join_key,
@@ -337,7 +343,8 @@ def get_featuregroups(featurestore=None, online=False):
 
     # Try with the cache first
     try:
-        return fs_utils._do_get_featuregroups(core._get_featurestore_metadata(featurestore, update_cache=False),
+        return fs_utils._do_get_featuregroups(core._get_featurestore_metadata(featurestore,
+                                                                              update_cache=update_cache_default),
                                               online=online)
     # If it fails, update cache
     except:
@@ -365,7 +372,8 @@ def get_features_list(featurestore=None, online=False):
     if featurestore is None:
         featurestore = project_featurestore()
     try:
-        return fs_utils._do_get_features_list(core._get_featurestore_metadata(featurestore, update_cache=False,),
+        return fs_utils._do_get_features_list(core._get_featurestore_metadata(featurestore,
+                                                                              update_cache=update_cache_default,),
                                               online=online)
     except:
         return fs_utils._do_get_features_list(core._get_featurestore_metadata(featurestore, update_cache=True,),
@@ -391,7 +399,8 @@ def get_training_datasets(featurestore=None):
     if featurestore is None:
         featurestore = project_featurestore()
     try:
-        return core._do_get_training_datasets(core._get_featurestore_metadata(featurestore, update_cache=False))
+        return core._do_get_training_datasets(core._get_featurestore_metadata(featurestore,
+                                                                              update_cache=update_cache_default))
     except:
         return core._do_get_training_datasets(core._get_featurestore_metadata(featurestore, update_cache=True))
 
@@ -434,7 +443,8 @@ def get_storage_connectors(featurestore = None):
     if featurestore is None:
         featurestore = project_featurestore()
     try:
-        return core._do_get_storage_connectors(core._get_featurestore_metadata(featurestore, update_cache=False))
+        return core._do_get_storage_connectors(core._get_featurestore_metadata(featurestore,
+                                                                               update_cache=update_cache_default))
     except:
         return core._do_get_storage_connectors(core._get_featurestore_metadata(featurestore, update_cache=True))
 
@@ -488,7 +498,7 @@ def get_training_dataset_path(training_dataset, featurestore=None, training_data
     try:
         return core._do_get_training_dataset_path(training_dataset,
                                                   core._get_featurestore_metadata(featurestore,
-                                                                                  update_cache=False),
+                                                                                  update_cache=update_cache_default),
                                                   training_dataset_version=training_dataset_version)
     except:
         return core._do_get_training_dataset_path(training_dataset,
@@ -540,7 +550,7 @@ def get_latest_featuregroup_version(featuregroup, featurestore=None):
     try:
         return fs_utils._do_get_latest_featuregroup_version(featuregroup,
                                                             core._get_featurestore_metadata(featurestore,
-                                                                                            update_cache=False))
+                                                                    update_cache=update_cache_default))
     except:
         return fs_utils._do_get_latest_featuregroup_version(featuregroup,
                                                             core._get_featurestore_metadata(featurestore,
@@ -571,7 +581,8 @@ def get_featuregroup_partitions(featuregroup, featurestore=None, featuregroup_ve
     try:
         # Try with cached metadata
         return core._do_get_featuregroup_partitions(featuregroup,
-                                                    core._get_featurestore_metadata(featurestore, update_cache=False),
+                                                    core._get_featurestore_metadata(featurestore,
+                                                                                    update_cache=update_cache_default),
                                                     featurestore, featuregroup_version)
     except:
         # Retry with updated cache
@@ -694,6 +705,8 @@ def visualize_featuregroup_correlations(featuregroup_name, featurestore=None, fe
     if featurestore is None:
         featurestore = project_featurestore()
     try:
+        if update_cache_default:
+            core._get_featurestore_metadata(featurestore, update_cache=True)
         # Construct the figure
         fig = core._do_visualize_featuregroup_correlations(featuregroup_name, featurestore, featuregroup_version,
                                                             figsize=figsize, cmap=cmap, annot=annot, fmt=fmt,
@@ -759,6 +772,8 @@ def visualize_featuregroup_clusters(featuregroup_name, featurestore=None, featur
     if featurestore is None:
         featurestore = project_featurestore()
     try:
+        if update_cache_default:
+            core._get_featurestore_metadata(featurestore, update_cache=True)
         # Construct the figure
         fig = core._do_visualize_featuregroup_clusters(featuregroup_name, featurestore, featuregroup_version,
                                                            figsize=figsize)
@@ -812,6 +827,8 @@ def visualize_featuregroup_descriptive_stats(featuregroup_name, featurestore=Non
     if featurestore is None:
         featurestore = project_featurestore()
     try:
+        if update_cache_default:
+            core._get_featurestore_metadata(featurestore, update_cache=True)
         df = core._do_visualize_featuregroup_descriptive_stats(featuregroup_name, featurestore,
                                                                    featuregroup_version)
         return df
@@ -873,6 +890,8 @@ def visualize_training_dataset_distributions(training_dataset_name, featurestore
     if featurestore is None:
         featurestore = project_featurestore()
     try:
+        if update_cache_default:
+            core._get_featurestore_metadata(featurestore, update_cache=True)
         # Construct the figure
         fig = core._do_visualize_training_dataset_distributions(training_dataset_name, featurestore,
                                                             training_dataset_version, figsize=figsize, color=color,
@@ -948,6 +967,8 @@ def visualize_training_dataset_correlations(training_dataset_name, featurestore=
     if featurestore is None:
         featurestore = project_featurestore()
     try:
+        if update_cache_default:
+            core._get_featurestore_metadata(featurestore, update_cache=True)
         # Construct the figure
         fig = core._do_visualize_training_dataset_correlations(training_dataset_name, featurestore,
                                                                training_dataset_version, figsize=figsize, cmap=cmap,
@@ -1015,6 +1036,8 @@ def visualize_training_dataset_clusters(training_dataset_name, featurestore=None
     if featurestore is None:
         featurestore = project_featurestore()
     try:
+        if update_cache_default:
+            core._get_featurestore_metadata(featurestore, update_cache=True)
         # Construct the figure
         fig = core._do_visualize_training_dataset_clusters(training_dataset_name, featurestore,
                                                            training_dataset_version, figsize=figsize)
@@ -1069,6 +1092,8 @@ def visualize_training_dataset_descriptive_stats(training_dataset_name, features
     if featurestore is None:
         featurestore = project_featurestore()
     try:
+        if update_cache_default:
+            core._get_featurestore_metadata(featurestore, update_cache=True)
         df = core._do_visualize_training_dataset_descriptive_stats(training_dataset_name, featurestore,
                                                                    training_dataset_version)
         return df
@@ -1110,6 +1135,8 @@ def get_featuregroup_statistics(featuregroup_name, featurestore=None, featuregro
     if featurestore is None:
         featurestore = project_featurestore()
     try:
+        if update_cache_default:
+            core._get_featurestore_metadata(featurestore, update_cache=True)
         return core._do_get_featuregroup_statistics(featuregroup_name, featurestore, featuregroup_version)
     except:
         core._get_featurestore_metadata(featurestore, update_cache=True)
@@ -1139,15 +1166,19 @@ def get_training_dataset_statistics(training_dataset_name, featurestore=None, tr
     if featurestore is None:
         featurestore = project_featurestore()
     try:
+        if update_cache_default:
+            core._get_featurestore_metadata(featurestore, update_cache=True)
         return core._do_get_training_dataset_statistics(training_dataset_name, featurestore, training_dataset_version)
     except:
         core._get_featurestore_metadata(featurestore, update_cache=True)
         return core._do_get_training_dataset_statistics(training_dataset_name, featurestore, training_dataset_version)
 
 def import_featuregroup_s3(storage_connector, featuregroup, path=None, primary_key=None, description="",
-                        featurestore=None, featuregroup_version=1, jobs=[], descriptive_statistics=True, feature_correlation=True, feature_histograms=True, cluster_analysis=True, stat_columns=None, num_bins=20, corr_method='pearson', num_clusters=5, partition_by=[], data_format="parquet",
-                        online=False, online_types=None, offline=True,
-                        am_cores=1, am_memory=2048, executor_cores=1, executor_memory=4096, max_executors=2):
+                           featurestore=None, featuregroup_version=1, jobs=[], descriptive_statistics=True,
+                           feature_correlation=True, feature_histograms=True, cluster_analysis=True, stat_columns=None,
+                           num_bins=20, corr_method='pearson', num_clusters=5, partition_by=[], data_format="parquet",
+                           online=False, online_types=None, offline=True,
+                           am_cores=1, am_memory=2048, executor_cores=1, executor_memory=4096, max_executors=2):
 
     """
     Creates and triggers a job to import an external dataset of features into a feature group in Hopsworks.
@@ -1273,7 +1304,8 @@ def import_featuregroup_redshift(storage_connector, query, featuregroup, primary
 
 
 def connect(host, project_name, port = 443, region_name = constants.AWS.DEFAULT_REGION,
-            secrets_store = 'parameterstore', hostname_verification=True, trust_store_path=None):
+            secrets_store = 'parameterstore', hostname_verification=True, trust_store_path=None,
+            use_metadata_cache=False):
     """
     Connects to a feature store from a remote environment such as Amazon SageMaker
 
@@ -1287,13 +1319,18 @@ def connect(host, project_name, port = 443, region_name = constants.AWS.DEFAULT_
         :port: the REST port of the Hopsworks cluster
         :region_name: The name of the AWS region in which the required secrets are stored
         :secrets_store: The secrets storage to be used. Either secretsmanager or parameterstore.
-        :hostname_verification: Enable or disable hostname verification. If a self-signed certificate was installed /
+        :hostname_verification: Enable or disable hostname verification. If a self-signed certificate was installed \
         on Hopsworks then the trust store needs to be supplied using trust_store_path.
         :trust_store_path: the trust store pem file for Hopsworks needed for self-signed certificates only
+        :use_metadata_cache: Whether the metadata cache should be used or not. If enabled some API calls may return \
+        outdated data.
 
     Returns:
         None
     """
+    global update_cache_default
+    update_cache_default = not use_metadata_cache
+
     os.environ[constants.ENV_VARIABLES.REST_ENDPOINT_END_VAR] = host + ':' + str(port)
     os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_NAME_ENV_VAR] = project_name
     os.environ[constants.ENV_VARIABLES.REGION_NAME_ENV_VAR] = region_name
@@ -1324,8 +1361,11 @@ def get_online_featurestore_connector(featurestore=None):
     if featurestore is None:
         featurestore = project_featurestore()
     try: # try with metadata cache
+        if update_cache_default:
+            core._get_featurestore_metadata(featurestore, update_cache=True)
         return core._do_get_online_featurestore_connector(featurestore,
-                                                   core._get_featurestore_metadata(featurestore, update_cache=False))
+                                                   core._get_featurestore_metadata(featurestore,
+                                                                                   update_cache=update_cache_default))
     except: # retry with updated metadata
         return core._do_get_online_featurestore_connector(featurestore,
                                                    core._get_featurestore_metadata(featurestore, update_cache=True))
