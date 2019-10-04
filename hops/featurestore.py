@@ -514,14 +514,9 @@ def get_latest_training_dataset_version(training_dataset, featurestore=None):
     """
     if featurestore is None:
         featurestore = project_featurestore()
-    try:
-        return fs_utils._do_get_latest_training_dataset_version(training_dataset,
-                                                                core._get_featurestore_metadata(featurestore,
-                                                                                                update_cache=False))
-    except:
-        return fs_utils._do_get_latest_training_dataset_version(training_dataset,
-                                                                core._get_featurestore_metadata(featurestore,
-                                                                                                update_cache=True))
+    return fs_utils._do_get_latest_training_dataset_version(training_dataset,
+                                                            core._get_featurestore_metadata(featurestore,
+                                                                                            update_cache=True))
 
 
 def get_latest_featuregroup_version(featuregroup, featurestore=None):
