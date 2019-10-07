@@ -1334,7 +1334,7 @@ def connect(host, project_name, port = 443, region_name = constants.AWS.DEFAULT_
     os.environ[constants.ENV_VARIABLES.REST_ENDPOINT_END_VAR] = host + ':' + str(port)
     os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_NAME_ENV_VAR] = project_name
     os.environ[constants.ENV_VARIABLES.REGION_NAME_ENV_VAR] = region_name
-    os.environ[constants.ENV_VARIABLES.API_KEY_ENV_VAR] = util.get_secret(util.project_name(), secrets_store, 'api-key')
+    os.environ[constants.ENV_VARIABLES.API_KEY_ENV_VAR] = util.get_secret(secrets_store, 'api-key')
 
     util.prepare_requests(hostname_verification=hostname_verification, trust_store_path=trust_store_path)
 
