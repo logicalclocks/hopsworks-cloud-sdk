@@ -213,21 +213,20 @@ def _parse_rest_error(response_dict):
     return error_code, error_msg, user_msg
 
 
-def get_secret(project_name, secrets_store, secret_key):
+def get_secret(secrets_store, secret_key):
     """
     Returns secret value from the AWS Secrets Manager or Parameter Store
 
     Args:
-        :project_name (str): name of project
         :secrets_store: the underlying secrets storage to be used, e.g. `secretsmanager` or `parameterstore`
         :secret_type (str): key for the secret value, e.g. `api-key`, `cert-key`, `trust-store`, `key-store`
     Returns:
         :str: secret value
     """
     if secrets_store == constants.AWS.SECRETS_MANAGER:
-        return _query_secrets_manager(project_name, secret_key)
+        return _query_secrets_manager(secret_key)
     elif secrets_store == constants.AWS.PARAMETER_STORE:
-        return _query_parameter_store(project_name, secret_key)
+        return _query_parameter_store(secret_key)
     else:
         raise UnkownSecretStorageError(
             "Secrets storage " + secrets_store + " is not supported.")
@@ -245,8 +244,8 @@ def _assumed_role():
     return local_identifier[1]
 
 
-def _query_secrets_manager(project_name, secret_key):
-    secret_name = 'hopsworks/project/' + project_name + '/role/' + _assumed_role()
+def _query_secrets_manager(secret_key):
+    secret_name = 'hopsworks/role/' + _assumed_role()
 
     session = boto3.session.Session()
     if (os.environ[constants.ENV_VARIABLES.REGION_NAME_ENV_VAR] != constants.AWS.DEFAULT_REGION):
@@ -262,10 +261,9 @@ def _query_secrets_manager(project_name, secret_key):
     return json.loads(get_secret_value_response['SecretString'])[secret_key]
 
 
-def _query_parameter_store(project_name, secret_key):
+def _query_parameter_store(secret_key):
     ssm = boto3.client('ssm')
-    name = '/hopsworks/project/' + project_name + \
-        '/role/' + _assumed_role() + '/type/' + secret_key
+    name = '/hopsworks/role/' + _assumed_role() + '/type/' + secret_key
     return ssm.get_parameter(Name=name, WithDecryption=True)['Parameter']['Value']
 
 
