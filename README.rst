@@ -35,7 +35,7 @@ Sample usage:
 Examples
 --------
 
-`Examples for using the Cloud SDK on SageMaker <https://nbviewer.jupyter.org/github/logicalclocks/hops-examples/blob/master/notebooks/featurestore/aws/SageMakerFeaturestoreTourPython.ipynb>`_
+`Examples for using the Cloud SDK on SageMaker <https://github.com/logicalclocks/hops-examples/blob/master/notebooks/featurestore/aws/SageMakerFeaturestoreTourPython.ipynb>`_
 
 ------------------------------------
 Documentation
@@ -46,6 +46,8 @@ API for the Hopsworks Feature Store
 Hopsworks has a data management layer for machine learning, called a feature store.
 The feature store enables simple and efficient versioning, sharing, governance and definition of features that can be used to both train machine learning models or to serve inference requests.
 The featurestore serves as a natural interface between data engineering and data science.
+
+`API documentation`<http://hopsworks-cloud-sdk.logicalclocks.com/>`_
 
 **Reading from the featurestore**:
 
