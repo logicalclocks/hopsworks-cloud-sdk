@@ -388,7 +388,6 @@ def get_featuregroup_features_list(featuregroup, version=None, featurestore=None
         :featuregroup: Name of the featuregroup to get feature names for.
         :version: Version of the featuregroup to use. Defaults to the latest version.
         :featurestore: The featurestore to list features for. Defaults to project-featurestore.
-        :online: Flag whether to filter the features that have online serving enabled. Defaults to False.
 
     Returns:
         A list of names of the features in this featuregroup.
