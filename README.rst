@@ -47,7 +47,7 @@ Hopsworks has a data management layer for machine learning, called a feature sto
 The feature store enables simple and efficient versioning, sharing, governance and definition of features that can be used to both train machine learning models or to serve inference requests.
 The featurestore serves as a natural interface between data engineering and data science.
 
-`API documentation`<http://hopsworks-cloud-sdk.logicalclocks.com/>`_
+`API documentation <http://hopsworks-cloud-sdk.logicalclocks.com/>`_
 
 **Reading from the featurestore**:
 
