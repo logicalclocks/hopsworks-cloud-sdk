@@ -1333,7 +1333,7 @@ def import_featuregroup_redshift(storage_connector, query, featuregroup, primary
 
 def connect(host, project_name, port = 443, region_name = constants.AWS.DEFAULT_REGION,
             secrets_store = 'parameterstore', hostname_verification=True, trust_store_path=None,
-            use_metadata_cache=False):
+            use_metadata_cache=False, cert_folder=''):
     """
     Connects to a feature store from a remote environment such as Amazon SageMaker
 
@@ -1352,6 +1352,7 @@ def connect(host, project_name, port = 443, region_name = constants.AWS.DEFAULT_
         :trust_store_path: the trust store pem file for Hopsworks needed for self-signed certificates only
         :use_metadata_cache: Whether the metadata cache should be used or not. If enabled some API calls may return \
         outdated data.
+        :cert_folder: the folder in which to store the Hopsworks certificates.
 
     Returns:
         None
@@ -1370,12 +1371,11 @@ def connect(host, project_name, port = 443, region_name = constants.AWS.DEFAULT_
     project_id = str(project_info['projectId'])
     os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_ID_ENV_VAR] = project_id
 
-    # download certificates from AWS Secret manager to access Hive
     credentials = rest_rpc._get_credentials(project_id)
-    util.write_b64_cert_to_bytes(str(credentials['kStore']), path='keyStore.jks')
-    util.write_b64_cert_to_bytes(str(credentials['tStore']), path='trustStore.jks')
+    util.write_b64_cert_to_bytes(str(credentials['kStore']), path=os.path.join(cert_folder, 'keyStore.jks'))
+    util.write_b64_cert_to_bytes(str(credentials['tStore']), path=os.path.join(cert_folder, 'trustStore.jks'))
 
-    # write env variables
+    os.environ[constants.ENV_VARIABLES.CERT_FOLDER_ENV_VAR] = cert_folder
     os.environ[constants.ENV_VARIABLES.CERT_KEY_ENV_VAR] = str(credentials['password'])
 
 def get_online_featurestore_connector(featurestore=None):
