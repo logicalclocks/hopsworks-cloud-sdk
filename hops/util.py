@@ -179,12 +179,13 @@ def _create_hive_connection(featurestore):
         :featurestore: featurestore to which connection will be established
     """
     host = urlparse(_get_hopsworks_rest_endpoint()).hostname
+    prefix = os.environ[constants.ENV_VARIABLES.CERT_FOLDER_ENV_VAR]
     hive_conn = hive.Connection(host=host,
                                 port=9085,
                                 database=featurestore,
                                 auth='CERTIFICATES',
-                                truststore='trustStore.jks',
-                                keystore='keyStore.jks',
+                                truststore=os.path.join(prefix, 'trustStore.jks'),
+                                keystore=os.path.join(prefix, 'keyStore.jks'),
                                 keystore_password=os.environ[constants.ENV_VARIABLES.CERT_KEY_ENV_VAR])
 
     return hive_conn
@@ -242,28 +243,31 @@ def _assumed_role():
             'Failed to extract assumed role from arn: ' + response['Arn'])
     return local_identifier[1]
 
+def _get_region():
+    if (os.environ[constants.ENV_VARIABLES.REGION_NAME_ENV_VAR] != constants.AWS.DEFAULT_REGION):
+        return os.environ[constants.ENV_VARIABLES.REGION_NAME_ENV_VAR]
+    else:
+        return None
 
 def _query_secrets_manager(secret_key):
     secret_name = 'hopsworks/role/' + _assumed_role()
-
-    session = boto3.session.Session()
-    if (os.environ[constants.ENV_VARIABLES.REGION_NAME_ENV_VAR] != constants.AWS.DEFAULT_REGION):
-        region_name = os.environ[constants.ENV_VARIABLES.REGION_NAME_ENV_VAR]
-    else:
-        region_name = session.region_name
-
-    client = session.client(
-        service_name='secretsmanager',
-        region_name=region_name
-    )
+    args = {'service_name': 'secretsmanager'}
+    region_name = _get_region()
+    if region_name:
+        args['region_name'] = region_name
+    client = boto3.client(**args)
     get_secret_value_response = client.get_secret_value(SecretId=secret_name)
     return json.loads(get_secret_value_response['SecretString'])[secret_key]
 
 
 def _query_parameter_store(secret_key):
-    ssm = boto3.client('ssm')
+    args = {'service_name': 'ssm'}
+    region_name = _get_region()
+    if region_name:
+        args['region_name'] = region_name
+    client = boto3.client(**args)
     name = '/hopsworks/role/' + _assumed_role() + '/type/' + secret_key
-    return ssm.get_parameter(Name=name, WithDecryption=True)['Parameter']['Value']
+    return client.get_parameter(Name=name, WithDecryption=True)['Parameter']['Value']
 
 
 def write_b64_cert_to_bytes(b64_string, path):
