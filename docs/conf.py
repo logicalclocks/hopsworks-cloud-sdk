@@ -169,7 +169,7 @@ texinfo_documents = [
      'Miscellaneous'),
 ]
 
-autodoc_mock_imports = ["pyhive", "numpy", "pandas", "boto3"]
+autodoc_mock_imports = ["pyhive", "numpy", "pandas", "boto3", "OpenSSL", "cryptography", "sqlalchemy"]
 
 exclude_patterns = ["featurestore_impl"]
 
