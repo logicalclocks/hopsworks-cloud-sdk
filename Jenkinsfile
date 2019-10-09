@@ -12,7 +12,7 @@ pipeline {
         sh """
         if [ ! -d $WORKSPACE/../hopsworks-cloud-sdk-env ];
         then
-          virtualenv --python=/usr/bin/python $WORKSPACE/../hopsworks-cloud-sdk-env
+          virtualenv --python=/usr/bin/python3 $WORKSPACE/../hopsworks-cloud-sdk-env
         fi
 	$WORKSPACE/../hopsworks-cloud-sdk-env/bin/pip install twine sphinx sphinx-autobuild recommonmark sphinx_rtd_theme jupyter_sphinx_theme readme_renderer[md]
         rm -rf dist/*
