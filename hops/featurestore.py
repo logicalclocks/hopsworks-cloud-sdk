@@ -1430,8 +1430,8 @@ def create_training_dataset(features, training_dataset, featurestore=None, featu
                             description="", data_format="tfrecords", training_dataset_version=1, overwrite=False,
                             jobs=[], descriptive_statistics=True, feature_correlation=True, feature_histograms=True,
                             cluster_analysis=True, stat_columns=[], num_bins=20, correlation_method='pearson',
-                            num_clusters=5, fixed=True, sink=None, am_cores=1, am_memory=2048, executor_cores=1,
-                            executor_memory=4096, max_executors=2):
+                            num_clusters=5, fixed=True, sink=None, path=None, am_cores=1, am_memory=2048,
+                            executor_cores=1, executor_memory=4096, max_executors=2):
     """
     Creates and triggers a job to create a training dataset of features from a featurestore in Hopsworks.
     The function joins the features on the specified `join_key`, saves metadata about the training dataset to the database
@@ -1474,6 +1474,9 @@ def create_training_dataset(features, training_dataset, featurestore=None, featu
         :num_clusters: Number of clusters to use for cluster analysis. Defaults to 5.
         :fixed: Boolean flag indicating whether array columns should be treated with fixed size or variable size. Defaults to True.
         :sink: Name of storage connector to store the training dataset. Defaults to the hdfs connector.
+        :path: path to complement the sink storage connector with, e.g if the storage connector points to an
+               S3 bucket, this path can be used to define a sub-directory inside the bucket to place the training
+               dataset.
         :am_cores: Number of cores assigned to the application master of the job. Defaults to 1.
         :am_memory: Memory in MB assigned to the application master of the job. Defaults to 2048.
         :executor_cores: Number of cores assigned to each of the executors of the job. Defaults to 1.
