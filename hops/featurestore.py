@@ -1426,9 +1426,10 @@ def get_online_featurestore_connector(featurestore=None):
         return core._do_get_online_featurestore_connector(featurestore,
                                                    core._get_featurestore_metadata(featurestore, update_cache=True))
 
-def create_training_dataset(features, training_dataset, featurestore=None, featuregroups_version_dict={}, join_key=None,
-                            description="", data_format="tfrecords", training_dataset_version=1, overwrite=False,
-                            jobs=[], descriptive_statistics=True, feature_correlation=True, feature_histograms=True,
+def create_training_dataset(training_dataset, features=None, sql_query=None, featurestore=None,
+                            featuregroups_version_dict={}, join_key=None, description="", data_format="tfrecords",
+                            training_dataset_version=1, overwrite=False, jobs=[], online=False,
+                            descriptive_statistics=True, feature_correlation=True, feature_histograms=True,
                             cluster_analysis=True, stat_columns=[], num_bins=20, correlation_method='pearson',
                             num_clusters=5, fixed=True, sink=None, path=None, am_cores=1, am_memory=2048,
                             executor_cores=1, executor_memory=4096, max_executors=2):
@@ -1449,8 +1450,13 @@ def create_training_dataset(features, training_dataset, featurestore=None, featu
     >>>                                      sink = "s3_connector")
 
     Args:
-        :features: A list of features, to be added to the training dataset.
         :training_dataset: The name of the training dataset.
+        :features: A list of features, to be added to the training dataset. `features` or `sql_query`, one of the two
+            should not be `None`. Defaults to `None`.
+        :sql_query: A generic SQL query string to create a training dataset from the featurestore. Be aware that no query
+            validation is performed until the job is being run, and hence the job might fail if your SQL string is
+            mal-formed. If `sql_query` is provided, `join_key` and `featuregroups_version_dict` become obsolete.
+            `features` or `sql_query`, one of the two should not be `None`. Defaults to `None`.
         :featurestore: The name of the featurestore that the training dataset is linked to.
                        Defaults to None, using the project default featurestore.
         :featuregroups_version_dict: An optional dict with (fg --> version) for all the featuregroups where the features reside.
@@ -1461,6 +1467,8 @@ def create_training_dataset(features, training_dataset, featurestore=None, featu
         :training_dataset_version: The version of the training dataset. Defaults to 1.
         :overwrite: Boolean to indicate if an existing training dataset with the same version should be overwritten. Defaults to False.
         :jobs: List of Hopsworks jobs linked to the training dataset. Defaults to [].
+        :online: Boolean flag whether to run the query against the online featurestore (otherwise it will be the offline
+            featurestore).
         :descriptive_statistics: A boolean flag whether to compute descriptive statistics (min,max,mean etc)
                                  for the featuregroup. Defaults to True.
         :feature_correlation: A boolean flag whether to compute a feature correlation matrix for the numeric columns
