@@ -1245,7 +1245,7 @@ def import_featuregroup_s3(storage_connector, featuregroup, path=None, primary_k
     >>> featurestore.import_featuregroup(my_s3_connector_name, s3_path, featuregroup_name,
     >>>                                  data_format=s3_bucket_data_format)
     >>> # You can also be explicitly specify featuregroup metadata and what statistics to compute:
-    >>> featurestore.import_featuregroup(my_s3_connector_name, s3_path, featuregroup_name, primary_key=[],
+    >>> featurestore.import_featuregroup(my_s3_connector_name, s3_path, featuregroup_name, primary_key=["id"],
     >>>                                  description="trx_summary_features without the column count_trx",
     >>>                                  featurestore=featurestore.project_featurestore(),featuregroup_version=1,
     >>>                                  jobs=[], descriptive_statistics=False,
