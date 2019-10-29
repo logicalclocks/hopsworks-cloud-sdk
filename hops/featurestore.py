@@ -1229,7 +1229,7 @@ def get_training_dataset_statistics(training_dataset_name, featurestore=None, tr
         core._get_featurestore_metadata(featurestore, update_cache=True)
         return core._do_get_training_dataset_statistics(training_dataset_name, featurestore, training_dataset_version)
 
-def import_featuregroup_s3(storage_connector, featuregroup, path=None, primary_key=None, description="",
+def import_featuregroup_s3(storage_connector, featuregroup, path=None, primary_key=[], description="",
                            featurestore=None, featuregroup_version=1, jobs=[], descriptive_statistics=True,
                            feature_correlation=True, feature_histograms=True, cluster_analysis=True, stat_columns=None,
                            num_bins=20, corr_method='pearson', num_clusters=5, partition_by=[], data_format="parquet",
@@ -1245,7 +1245,7 @@ def import_featuregroup_s3(storage_connector, featuregroup, path=None, primary_k
     >>> featurestore.import_featuregroup(my_s3_connector_name, s3_path, featuregroup_name,
     >>>                                  data_format=s3_bucket_data_format)
     >>> # You can also be explicitly specify featuregroup metadata and what statistics to compute:
-    >>> featurestore.import_featuregroup(my_s3_connector_name, s3_path, featuregroup_name, primary_key="id",
+    >>> featurestore.import_featuregroup(my_s3_connector_name, s3_path, featuregroup_name, primary_key=["id"],
     >>>                                  description="trx_summary_features without the column count_trx",
     >>>                                  featurestore=featurestore.project_featurestore(),featuregroup_version=1,
     >>>                                  jobs=[], descriptive_statistics=False,
@@ -1258,7 +1258,8 @@ def import_featuregroup_s3(storage_connector, featuregroup, path=None, primary_k
         :storage_connector: the storage connector used to connect to the external storage
         :path: the path to read from the external storage
         :featuregroup: name of the featuregroup to import the dataset into the featurestore
-        :primary_key: primary key of the featuregroup
+        :primary_key: a list of columns to be used as primary key of the new featuregroup, if not specified,
+            the first column in the dataframe will be used as primary
         :description: metadata description of the feature group to import
         :featurestore: name of the featurestore database to import the feature group into
         :featuregroup_version: version of the feature group
@@ -1290,12 +1291,18 @@ def import_featuregroup_s3(storage_connector, featuregroup, path=None, primary_k
     Returns:
         None
     """
+    # Deprecation warning
+    if isinstance(primary_key, str):
+        print(
+            "DeprecationWarning: Primary key of type str is deprecated. With the introduction of composite primary keys"
+            " this method expects a list of strings to define the primary key.")
+        primary_key = [primary_key]
     arguments = locals()
     arguments['type'] = "S3"
     core._do_import_featuregroup(json.dumps(arguments))
     job.launch_job(featuregroup)
 
-def import_featuregroup_redshift(storage_connector, query, featuregroup, primary_key=None, description="",
+def import_featuregroup_redshift(storage_connector, query, featuregroup, primary_key=[], description="",
                                  featurestore=None, featuregroup_version=1, jobs=[], descriptive_statistics=True,
                                  feature_correlation=True, feature_histograms=True, cluster_analysis=True,
                                  stat_columns=None, num_bins=20, corr_method='pearson', num_clusters=5,
@@ -1309,7 +1316,7 @@ def import_featuregroup_redshift(storage_connector, query, featuregroup, primary
     Example usage:
     >>> featurestore.import_featuregroup_redshift(my_jdbc_connector_name, sql_query, featuregroup_name)
     >>> # You can also be explicitly specify featuregroup metadata and what statistics to compute:
-    >>> featurestore.import_featuregroup_redshift(my_jdbc_connector_name, sql_query, featuregroup_name, primary_key="id",
+    >>> featurestore.import_featuregroup_redshift(my_jdbc_connector_name, sql_query, featuregroup_name, primary_key=["id"],
     >>>                                  description="trx_summary_features without the column count_trx",
     >>>                                  featurestore=featurestore.project_featurestore(), featuregroup_version=1,
     >>>                                  jobs=[], descriptive_statistics=False,
@@ -1321,7 +1328,8 @@ def import_featuregroup_redshift(storage_connector, query, featuregroup, primary
         :storage_connector: the storage connector used to connect to the external storage
         :query: the queury extracting data from Redshift
         :featuregroup: name of the featuregroup to import the dataset into the featurestore
-        :primary_key: primary key of the featuregroup
+        :primary_key: a list columns to be used as primary key of the new featuregroup, if not specified,
+            the first column in the dataframe will be used as primary
         :description: metadata description of the feature group to import
         :featurestore: name of the featurestore database to import the feature group into
         :featuregroup_version: version of the feature group
@@ -1353,6 +1361,12 @@ def import_featuregroup_redshift(storage_connector, query, featuregroup, primary
     Returns:
         None
     """
+    # Deprecation warning
+    if isinstance(primary_key, str):
+        print(
+            "DeprecationWarning: Primary key of type str is deprecated. With the introduction of composite primary keys"
+            " this method expects a list of strings to define the primary key.")
+        primary_key = [primary_key]
     arguments = locals()
     arguments['type'] = "REDSHIFT"
     core._do_import_featuregroup(json.dumps(arguments))
