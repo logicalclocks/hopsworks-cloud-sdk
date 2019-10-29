@@ -1291,6 +1291,12 @@ def import_featuregroup_s3(storage_connector, featuregroup, path=None, primary_k
     Returns:
         None
     """
+    # Deprecation warning
+    if isinstance(primary_key, str):
+        print(
+            "DeprecationWarning: Primary key of type str is deprecated. With the introduction of composite primary keys"
+            " this method expects a list of strings to define the primary key.")
+        primary_key = [primary_key]
     arguments = locals()
     arguments['type'] = "S3"
     core._do_import_featuregroup(json.dumps(arguments))
@@ -1355,6 +1361,12 @@ def import_featuregroup_redshift(storage_connector, query, featuregroup, primary
     Returns:
         None
     """
+    # Deprecation warning
+    if isinstance(primary_key, str):
+        print(
+            "DeprecationWarning: Primary key of type str is deprecated. With the introduction of composite primary keys"
+            " this method expects a list of strings to define the primary key.")
+        primary_key = [primary_key]
     arguments = locals()
     arguments['type'] = "REDSHIFT"
     core._do_import_featuregroup(json.dumps(arguments))
