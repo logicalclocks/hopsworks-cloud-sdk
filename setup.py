@@ -14,6 +14,7 @@ setup(
     name='hopsworks-cloud-sdk',
     version=__version__,
     install_requires=[
+        'requests',
         'numpy',
         'pandas',
         'pyhopshive[thrift]',

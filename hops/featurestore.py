@@ -1387,7 +1387,7 @@ def import_featuregroup_redshift(storage_connector, query, featuregroup, primary
 
 def connect(host, project_name, port = 443, region_name = constants.AWS.DEFAULT_REGION,
             secrets_store = 'parameterstore', hostname_verification=True, trust_store_path=None,
-            use_metadata_cache=False, cert_folder=''):
+            use_metadata_cache=False, cert_folder='', api_key_file=None):
     """
     Connects to a feature store from a remote environment such as Amazon SageMaker
 
@@ -1400,13 +1400,14 @@ def connect(host, project_name, port = 443, region_name = constants.AWS.DEFAULT_
         :project_name: the name of the project hosting the feature store to be used
         :port: the REST port of the Hopsworks cluster
         :region_name: The name of the AWS region in which the required secrets are stored
-        :secrets_store: The secrets storage to be used. Either secretsmanager or parameterstore.
+        :secrets_store: The secrets storage to be used. Either secretsmanager, parameterstore or local
         :hostname_verification: Enable or disable hostname verification. If a self-signed certificate was installed \
         on Hopsworks then the trust store needs to be supplied using trust_store_path.
         :trust_store_path: the trust store pem file for Hopsworks needed for self-signed certificates only
         :use_metadata_cache: Whether the metadata cache should be used or not. If enabled some API calls may return \
         outdated data.
         :cert_folder: the folder in which to store the Hopsworks certificates.
+        :api_key_file: path to a file containing an API key. For secrets_store=local only.
 
     Returns:
         None
@@ -1417,7 +1418,7 @@ def connect(host, project_name, port = 443, region_name = constants.AWS.DEFAULT_
     os.environ[constants.ENV_VARIABLES.REST_ENDPOINT_END_VAR] = host + ':' + str(port)
     os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_NAME_ENV_VAR] = project_name
     os.environ[constants.ENV_VARIABLES.REGION_NAME_ENV_VAR] = region_name
-    os.environ[constants.ENV_VARIABLES.API_KEY_ENV_VAR] = util.get_secret(secrets_store, 'api-key')
+    os.environ[constants.ENV_VARIABLES.API_KEY_ENV_VAR] = util.get_secret(secrets_store, 'api-key', api_key_file)
 
     util.prepare_requests(hostname_verification=hostname_verification, trust_store_path=trust_store_path)
 
