@@ -1514,7 +1514,12 @@ def create_training_dataset(training_dataset, features=None, sql_query=None, fea
         :executor_cores: Number of cores assigned to each of the executors of the job. Defaults to 1.
         :executor_memory: Memory in MB assigned to each of the executors of the job. Defaults to 4096.
         :max_executors: Maximum number of executors assigned to the job.
+
+    Raises:
+        :StorageConnectorNotFound: when the requested storage connector could not be found in the metadata
     """
+    # try getting the storage connector to check for its existence, throws StorageConnectorNotFound
+    core._do_get_storage_connector(sink, featurestore)
     job_conf = locals()
     # treat featuregroups_version_dict as string
     job_conf['featuregroups_version_dict'] = json.dumps(job_conf['featuregroups_version_dict'])
