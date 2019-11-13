@@ -1290,6 +1290,9 @@ def import_featuregroup_s3(storage_connector, featuregroup, path=None, primary_k
 
     Returns:
         None
+
+    Raises:
+        :StorageConnectorNotFound: when the requested storage connector could not be found in the metadata
     """
     # Deprecation warning
     if isinstance(primary_key, str):
@@ -1297,6 +1300,8 @@ def import_featuregroup_s3(storage_connector, featuregroup, path=None, primary_k
             "DeprecationWarning: Primary key of type str is deprecated. With the introduction of composite primary keys"
             " this method expects a list of strings to define the primary key.")
         primary_key = [primary_key]
+    # try getting the storage connector to check for its existence, throws StorageConnectorNotFound
+    core._do_get_storage_connector(storage_connector, featurestore)
     arguments = locals()
     arguments['type'] = "S3"
     core._do_import_featuregroup(json.dumps(arguments))
@@ -1360,6 +1365,9 @@ def import_featuregroup_redshift(storage_connector, query, featuregroup, primary
 
     Returns:
         None
+
+    Raises:
+        :StorageConnectorNotFound: when the requested storage connector could not be found in the metadata
     """
     # Deprecation warning
     if isinstance(primary_key, str):
@@ -1367,6 +1375,8 @@ def import_featuregroup_redshift(storage_connector, query, featuregroup, primary
             "DeprecationWarning: Primary key of type str is deprecated. With the introduction of composite primary keys"
             " this method expects a list of strings to define the primary key.")
         primary_key = [primary_key]
+    # try getting the storage connector to check for its existence, throws StorageConnectorNotFound
+    core._do_get_storage_connector(storage_connector, featurestore)
     arguments = locals()
     arguments['type'] = "REDSHIFT"
     core._do_import_featuregroup(json.dumps(arguments))
@@ -1504,7 +1514,12 @@ def create_training_dataset(training_dataset, features=None, sql_query=None, fea
         :executor_cores: Number of cores assigned to each of the executors of the job. Defaults to 1.
         :executor_memory: Memory in MB assigned to each of the executors of the job. Defaults to 4096.
         :max_executors: Maximum number of executors assigned to the job.
+
+    Raises:
+        :StorageConnectorNotFound: when the requested storage connector could not be found in the metadata
     """
+    # try getting the storage connector to check for its existence, throws StorageConnectorNotFound
+    core._do_get_storage_connector(sink, featurestore)
     job_conf = locals()
     # treat featuregroups_version_dict as string
     job_conf['featuregroups_version_dict'] = json.dumps(job_conf['featuregroups_version_dict'])

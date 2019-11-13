@@ -112,10 +112,10 @@ def _do_get_storage_connector(storage_connector_name, featurestore):
         :featurestore: the featurestore to query
 
     Returns:
-        the id of the featuregroup
+        the storage connector
 
     Raises:
-        :FeaturegroupNotFound: when the requested featuregroup could not be found in the metadata
+        :StorageConnectorNotFound: when the requested storage connector could not be found in the metadata
     """
     metadata = _get_featurestore_metadata(featurestore, update_cache=False)
     if metadata is None or featurestore != metadata.featurestore:
@@ -127,13 +127,13 @@ def _do_get_storage_connector(storage_connector_name, featurestore):
             # Retry with updated metadata
             metadata = _get_featurestore_metadata(
                 featurestore, update_cache=True)
+            return metadata.storage_connectors[storage_connector_name]
         except KeyError:
             storage_connector_names = list(
-                map(lambda sc: sc.name, metadata.storage_connectors))
+                map(lambda sc: sc.name, list(metadata.storage_connectors.values())))
             raise StorageConnectorNotFound("Could not find the requested storage connector with name: {} "
                                            ", among the list of available storage connectors: {}".format(
-                                               storage_connector_name,
-                                               storage_connector_names))
+                                           storage_connector_name, storage_connector_names))
 
 
 def _do_get_feature(feature, featurestore_metadata, featurestore=None, featuregroup=None, featuregroup_version=1,
