@@ -130,6 +130,7 @@ def _do_get_storage_connector(storage_connector_name, featurestore):
             # Retry with updated metadata
             metadata = _get_featurestore_metadata(
                 featurestore, update_cache=True)
+            return metadata.storage_connectors[storage_connector_name]
         except KeyError:
             print("Key error reaised")
             storage_connector_names = list(
