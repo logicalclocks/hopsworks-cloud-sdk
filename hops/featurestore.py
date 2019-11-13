@@ -1290,6 +1290,9 @@ def import_featuregroup_s3(storage_connector, featuregroup, path=None, primary_k
 
     Returns:
         None
+
+    Raises:
+        :StorageConnectorNotFound: when the requested storage connector could not be found in the metadata
     """
     # Deprecation warning
     if isinstance(primary_key, str):
@@ -1297,7 +1300,7 @@ def import_featuregroup_s3(storage_connector, featuregroup, path=None, primary_k
             "DeprecationWarning: Primary key of type str is deprecated. With the introduction of composite primary keys"
             " this method expects a list of strings to define the primary key.")
         primary_key = [primary_key]
-    # try getting the storage connector to check for its existence
+    # try getting the storage connector to check for its existence, throws StorageConnectorNotFound
     core._do_get_storage_connector(storage_connector, featurestore)
     arguments = locals()
     arguments['type'] = "S3"
@@ -1362,6 +1365,9 @@ def import_featuregroup_redshift(storage_connector, query, featuregroup, primary
 
     Returns:
         None
+
+    Raises:
+        :StorageConnectorNotFound: when the requested storage connector could not be found in the metadata
     """
     # Deprecation warning
     if isinstance(primary_key, str):
@@ -1369,7 +1375,7 @@ def import_featuregroup_redshift(storage_connector, query, featuregroup, primary
             "DeprecationWarning: Primary key of type str is deprecated. With the introduction of composite primary keys"
             " this method expects a list of strings to define the primary key.")
         primary_key = [primary_key]
-    # try getting the storage connector to check for its existence
+    # try getting the storage connector to check for its existence, throws StorageConnectorNotFound
     core._do_get_storage_connector(storage_connector, featurestore)
     arguments = locals()
     arguments['type'] = "REDSHIFT"
