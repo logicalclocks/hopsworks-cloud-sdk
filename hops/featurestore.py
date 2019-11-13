@@ -1242,6 +1242,7 @@ def import_featuregroup_s3(storage_connector, featuregroup, path=None, primary_k
     and then writes the data to Hopsworks Feature Store (Hive) and registers its metadata.
 
     Example usage:
+
     >>> featurestore.import_featuregroup(my_s3_connector_name, s3_path, featuregroup_name,
     >>>                                  data_format=s3_bucket_data_format)
     >>> # You can also be explicitly specify featuregroup metadata and what statistics to compute:
@@ -1280,8 +1281,8 @@ def import_featuregroup_s3(storage_connector, featuregroup, path=None, primary_k
         :online: boolean flag, if this is set to true, a MySQL table for online feature data will be created in
                  addition to the Hive table for offline feature data
         :online_types: a dict with feature_name --> online_type, if a feature is present in this dict,
-                            the online_type will be taken from the dict rather than inferred from the spark dataframe.
-        :offline boolean flag whether to insert the data in the offline version of the featuregroup
+                       the online_type will be taken from the dict rather than inferred from the spark dataframe.
+        :offline: boolean flag whether to insert the data in the offline version of the featuregroup
         :am_cores: number of cores for the import job's application master
         :am_memory: ammount of memory for the import job's application master
         :executor_cores: number of cores for the import job's executors
@@ -1314,6 +1315,7 @@ def import_featuregroup_redshift(storage_connector, query, featuregroup, primary
     and then writes the data to Hopsworks Feature Store (Hive) and registers its metadata.
 
     Example usage:
+
     >>> featurestore.import_featuregroup_redshift(my_jdbc_connector_name, sql_query, featuregroup_name)
     >>> # You can also be explicitly specify featuregroup metadata and what statistics to compute:
     >>> featurestore.import_featuregroup_redshift(my_jdbc_connector_name, sql_query, featuregroup_name, primary_key=["id"],
@@ -1349,8 +1351,8 @@ def import_featuregroup_redshift(storage_connector, query, featuregroup, primary
         :online: boolean flag, if this is set to true, a MySQL table for online feature data will be created in
                  addition to the Hive table for offline feature data
         :online_types: a dict with feature_name --> online_type, if a feature is present in this dict,
-                            the online_type will be taken from the dict rather than inferred from the spark dataframe.
-        :offline boolean flag whether to insert the data in the offline version of the featuregroup
+                       the online_type will be taken from the dict rather than inferred from the spark dataframe.
+        :offline: boolean flag whether to insert the data in the offline version of the featuregroup
         :am_cores: number of cores for the import job's application master
         :am_memory: ammount of memory for the import job's application master
         :executor_cores: number of cores for the import job's executors
