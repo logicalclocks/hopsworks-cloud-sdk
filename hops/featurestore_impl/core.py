@@ -117,22 +117,18 @@ def _do_get_storage_connector(storage_connector_name, featurestore):
     Raises:
         :StorageConnectorNotFound: when the requested storage connector could not be found in the metadata
     """
-    print("do get storage connector")
     metadata = _get_featurestore_metadata(featurestore, update_cache=False)
     if metadata is None or featurestore != metadata.featurestore:
         metadata = _get_featurestore_metadata(featurestore, update_cache=True)
     try:
-        print("try with metadata")
         return metadata.storage_connectors[storage_connector_name]
     except:
         try:
-            print("try again with updated cache")
             # Retry with updated metadata
             metadata = _get_featurestore_metadata(
                 featurestore, update_cache=True)
             return metadata.storage_connectors[storage_connector_name]
         except KeyError:
-            print("Key error reaised")
             storage_connector_names = list(
                 map(lambda sc: sc.name, list(metadata.storage_connectors.values())))
             raise StorageConnectorNotFound("Could not find the requested storage connector with name: {} "
