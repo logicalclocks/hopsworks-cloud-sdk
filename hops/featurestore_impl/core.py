@@ -134,7 +134,7 @@ def _do_get_storage_connector(storage_connector_name, featurestore):
         except KeyError:
             print("Key error reaised")
             storage_connector_names = list(
-                map(lambda sc: sc.name, metadata.storage_connectors))
+                map(lambda sc: sc.name, list(metadata.storage_connectors.values())))
             raise StorageConnectorNotFound("Could not find the requested storage connector with name: {} "
                                            ", among the list of available storage connectors: {}".format(
                                            storage_connector_name, storage_connector_names))
