@@ -1303,6 +1303,14 @@ def import_featuregroup_s3(storage_connector, featuregroup, path=None, primary_k
         primary_key = [primary_key]
     # try getting the storage connector to check for its existence, throws StorageConnectorNotFound
     core._do_get_storage_connector(storage_connector, featurestore)
+    try:
+        fs_utils._validate_metadata(
+            featuregroup, description, core._get_featurestore_metadata(
+                featurestore, update_cache=update_cache_default).settings)
+    except: # retry with updated metadata
+        fs_utils._validate_metadata(
+            featuregroup, description, core._get_featurestore_metadata(
+                featurestore, update_cache=True).settings)
     arguments = locals()
     arguments['type'] = "S3"
     core._do_import_featuregroup(json.dumps(arguments))
@@ -1379,6 +1387,14 @@ def import_featuregroup_redshift(storage_connector, query, featuregroup, primary
         primary_key = [primary_key]
     # try getting the storage connector to check for its existence, throws StorageConnectorNotFound
     core._do_get_storage_connector(storage_connector, featurestore)
+    try:
+        fs_utils._validate_metadata(
+            featuregroup, description, core._get_featurestore_metadata(
+                featurestore, update_cache=update_cache_default).settings)
+    except: # retry with updated metadata
+        fs_utils._validate_metadata(
+            featuregroup, description, core._get_featurestore_metadata(
+                featurestore, update_cache=True).settings)
     arguments = locals()
     arguments['type'] = "REDSHIFT"
     core._do_import_featuregroup(json.dumps(arguments))
@@ -1524,6 +1540,14 @@ def create_training_dataset(training_dataset, features=None, sql_query=None, fea
     # try getting the storage connector to check for its existence, throws StorageConnectorNotFound
     if sink:
         core._do_get_storage_connector(sink, featurestore)
+    try:
+        fs_utils._validate_metadata(
+            training_dataset, description, core._get_featurestore_metadata(
+                featurestore, update_cache=update_cache_default).settings)
+    except: # retry with updated metadata
+        fs_utils._validate_metadata(
+            training_dataset, description, core._get_featurestore_metadata(
+                featurestore, update_cache=True).settings)
     job_conf = locals()
     # treat featuregroups_version_dict as string
     job_conf['featuregroups_version_dict'] = json.dumps(job_conf['featuregroups_version_dict'])

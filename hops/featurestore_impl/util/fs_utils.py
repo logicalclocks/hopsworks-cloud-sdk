@@ -3,6 +3,7 @@ Contains utility functions for operations related to the feature store
 """
 
 import os
+import re
 
 from hops import constants, util
 
@@ -174,3 +175,31 @@ def _visualization_validation_warning():
         _log("Visualizations are not supported in Livy Sessions. "
                       "Use %%local and %matplotlib inline to access the "
                       "python kernel from PySpark notebooks")
+
+
+def _validate_metadata(name, description, featurestore_settings):
+    """
+    Function for validating metadata when creating new feature groups and training datasets.
+    Raises and assertion exception if there is some error in the metadata.
+
+    Args:
+        :name: the name of the feature group/training dataset
+        :description: the description
+        :featurestore_regex: Regex string to match featuregroup/training dataset and feature names with
+
+    Returns:
+        None
+
+    Raises:
+        :ValueError: if the metadata does not match the required validation rules
+    """
+    name_pattern = re.compile(featurestore_settings.featurestore_regex)
+    if len(name) > 256 or name == "" or not name_pattern.match(name):
+        raise ValueError("Name of feature group/training dataset cannot be empty, cannot contain upper case characters,"
+                         " cannot exceed 256 characters, and must match the regular expression: {}, the provided name: "
+                         "{} is not valid".format(featurestore_settings.featurestore_regex, name))
+
+    if len(description) > 2000:
+        raise ValueError(
+            "Feature group/Training dataset description should not exceed the maximum length of 2000 characters, "
+            "the provided description has length: {}".format(len(description)))
