@@ -1521,7 +1521,8 @@ def create_training_dataset(training_dataset, features=None, sql_query=None, fea
         :StorageConnectorNotFound: when the requested storage connector could not be found in the metadata
     """
     # try getting the storage connector to check for its existence, throws StorageConnectorNotFound
-    core._do_get_storage_connector(sink, featurestore)
+    if sink:
+        core._do_get_storage_connector(sink, featurestore)
     job_conf = locals()
     # treat featuregroups_version_dict as string
     job_conf['featuregroups_version_dict'] = json.dumps(job_conf['featuregroups_version_dict'])
