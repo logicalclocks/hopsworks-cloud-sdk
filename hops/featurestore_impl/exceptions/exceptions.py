@@ -67,3 +67,9 @@ class OnlineFeaturestorePasswordOrUserNotFound(Exception):
     This exception will be raised if the user tries to do an operation on the online feature store but a
     user/password for the online featurestore was not found.
     """
+
+
+class OnlineFeaturestoreNotEnabled(Exception):
+    """
+    This exception will be raised if the user tries to interact with the online featurestore but it is not enabled
+    """
