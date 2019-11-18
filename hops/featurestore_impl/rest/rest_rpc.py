@@ -6,19 +6,31 @@ import os
 
 from hops import constants, util
 from hops.exceptions import RestAPIError
+import json
 
+# To be compatible with python2 and python3
+try:
+    from json.decoder import JSONDecodeError
+except ImportError:
+    JSONDecodeError = ValueError
 
 def _http(resource_url, headers=None, method=constants.HTTP_CONFIG.HTTP_GET, data=None):
-    response = util.send_request(
-        method, resource_url, headers=headers, data=data)
-    response_object = response.json()
+    response = util.send_request(method, resource_url, headers=headers, data=data)
+    try:
+        response_object = response.json()
+    except JSONDecodeError:
+        response_object = None
 
     if (response.status_code // 100) != 2:
-        error_code, error_msg, user_msg = util._parse_rest_error(
-            response_object)
+        if response_object:
+            error_code, error_msg, user_msg = util._parse_rest_error(response_object)
+        else:
+            error_code, error_msg, user_msg = "", "", ""
+
         raise RestAPIError("Could not execute HTTP request (url: {}), server response: \n "
                            "HTTP code: {}, HTTP reason: {}, error code: {}, error msg: {}, user msg: {}".format(
-                               resource_url, response.status_code, response.reason, error_code, error_msg, user_msg))
+            resource_url, response.status_code, response.reason, error_code, error_msg, user_msg))
+
     return response_object
 
 
@@ -219,3 +231,83 @@ def _put_trainingdataset_create_job(job_conf):
                     constants.DELIMITERS.SLASH_DELIMITER +
                     constants.REST_CONFIG.HOPSWORKS_TRAININGDATASETS_CREATION_RESOURCE)
     return _http(resource_url, method = constants.HTTP_CONFIG.HTTP_POST, headers=headers, data=job_conf)
+
+
+def _add_metadata(featurestore_id, featuregroup_id, name, value):
+    """
+    Makes a REST call to Hopsworks to attach extended metadata to a featuregroup
+
+    Args:
+        :featurestore_id: the id of the featurestore
+        :featuregroup_id: the id of the featuregroup
+        :name: the name of the extended attribute
+        :value: the value of the extended attribute
+
+    Returns:
+        None
+
+    Raises:
+        :RestAPIError: if there was an error in the REST call to Hopsworks
+    """
+    headers = {constants.HTTP_CONFIG.HTTP_CONTENT_TYPE: constants.HTTP_CONFIG.HTTP_APPLICATION_JSON}
+    data = json.dumps({name: str(value)})
+    resource_url = (_get_api_featurestore_path_id(featurestore_id) + constants.DELIMITERS.SLASH_DELIMITER +
+                    constants.REST_CONFIG.HOPSWORKS_FEATUREGROUPS_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
+                    str(featuregroup_id) + constants.DELIMITERS.SLASH_DELIMITER +
+                    constants.REST_CONFIG.HOPSWORKS_FEATUREGROUPS_XATTRS_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
+                    name)
+    _http(resource_url, method=constants.HTTP_CONFIG.HTTP_PUT, headers=headers, data=data)
+
+
+def _get_metadata(featurestore_id, featuregroup_id, name=None):
+    """
+    Makes a REST call to Hopsworks to get extended metadata attached to a featuregroup
+
+    Args:
+        :featurestore_id: the id of the featurestore
+        :featuregroup_id: the id of the featuregroup
+        :name: the name of the extended attribute
+
+    Returns:
+        A dictionary containing the extended metadata
+
+    Raises:
+        :RestAPIError: if there was an error in the REST call to Hopsworks
+    """
+    headers = {constants.HTTP_CONFIG.HTTP_CONTENT_TYPE: constants.HTTP_CONFIG.HTTP_APPLICATION_JSON}
+    resource_url = (_get_api_featurestore_path_id(featurestore_id) + constants.DELIMITERS.SLASH_DELIMITER +
+                    constants.REST_CONFIG.HOPSWORKS_FEATUREGROUPS_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
+                    str(featuregroup_id) + constants.DELIMITERS.SLASH_DELIMITER +
+                    constants.REST_CONFIG.HOPSWORKS_FEATUREGROUPS_XATTRS_RESOURCE)
+    if name is not None:
+        resource_url += constants.DELIMITERS.SLASH_DELIMITER + name
+
+    response = _http(resource_url, method=constants.HTTP_CONFIG.HTTP_GET, headers=headers)
+    results = {}
+    for item in response["items"]:
+        results[item["name"]] = item["value"]
+    return results
+
+
+def _remove_metadata(featurestore_id, featuregroup_id, name):
+    """
+    Makes a REST call to Hopsworks to delete extended metadata attached to a featuregroup
+
+    Args:
+        :featurestore_id: the id of the featurestore
+        :featuregroup_id: the id of the featuregroup
+        :name: the name of the extended attribute
+
+    Returns:
+        None
+
+    Raises:
+        :RestAPIError: if there was an error in the REST call to Hopsworks
+    """
+    headers = {constants.HTTP_CONFIG.HTTP_CONTENT_TYPE: constants.HTTP_CONFIG.HTTP_APPLICATION_JSON}
+    resource_url = (_get_api_featurestore_path_id(featurestore_id) + constants.DELIMITERS.SLASH_DELIMITER +
+                    constants.REST_CONFIG.HOPSWORKS_FEATUREGROUPS_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
+                    str(featuregroup_id) + constants.DELIMITERS.SLASH_DELIMITER +
+                    constants.REST_CONFIG.HOPSWORKS_FEATUREGROUPS_XATTRS_RESOURCE + constants.DELIMITERS.SLASH_DELIMITER +
+                    name)
+    _http(resource_url, method=constants.HTTP_CONFIG.HTTP_DELETE, headers=headers)
