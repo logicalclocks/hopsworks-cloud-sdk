@@ -275,3 +275,6 @@ class AWS:
     SECRETS_MANAGER = "secretsmanager"
     PARAMETER_STORE = "parameterstore"
     SSM = "SSM"
+
+class LOCAL:
+    LOCAL_STORE = "local"

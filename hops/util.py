@@ -213,13 +213,14 @@ def _parse_rest_error(response_dict):
     return error_code, error_msg, user_msg
 
 
-def get_secret(secrets_store, secret_key):
+def get_secret(secrets_store, secret_key=None, api_key_file=None):
     """
     Returns secret value from the AWS Secrets Manager or Parameter Store
 
     Args:
         :secrets_store: the underlying secrets storage to be used, e.g. `secretsmanager` or `parameterstore`
         :secret_type (str): key for the secret value, e.g. `api-key`, `cert-key`, `trust-store`, `key-store`
+        :api_token_file: path to a file containing an api key
     Returns:
         :str: secret value
     """
@@ -227,6 +228,11 @@ def get_secret(secrets_store, secret_key):
         return _query_secrets_manager(secret_key)
     elif secrets_store == constants.AWS.PARAMETER_STORE:
         return _query_parameter_store(secret_key)
+    elif secrets_store == constants.LOCAL.LOCAL_STORE:
+        if not api_key_file:
+            raise Exception('api_key_file needs to be set for local mode')
+        with open(api_key_file) as f:
+            return f.readline().strip()
     else:
         raise UnkownSecretStorageError(
             "Secrets storage " + secrets_store + " is not supported.")
