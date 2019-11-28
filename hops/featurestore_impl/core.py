@@ -28,7 +28,7 @@ from hops.featurestore_impl.dao.storageconnectors.jdbc_connector import JDBCStor
 from hops.featurestore_impl.exceptions.exceptions import FeaturegroupNotFound, TrainingDatasetNotFound, \
     FeatureDistributionsNotComputed, \
     FeatureCorrelationsNotComputed, FeatureClustersNotComputed, DescriptiveStatisticsNotComputed, \
-    StorageConnectorNotFound, CannotGetPartitionsOfOnDemandFeatureGroup
+    StorageConnectorNotFound, CannotGetPartitionsOfOnDemandFeatureGroup, OnlineFeaturestoreNotEnabled
 from hops.featurestore_impl.online_featurestore import _get_online_feature_store_password_and_user
 from hops.featurestore_impl.query_planner import query_planner
 from hops.featurestore_impl.query_planner.f_query import FeatureQuery, FeaturesQuery
@@ -158,6 +158,10 @@ def _do_get_feature(feature, featurestore_metadata, featurestore=None, featuregr
         A pandas dataframe with the feature
 
     """
+    if online and ((not featurestore_metadata.settings.online_enabled) or
+                       (not featurestore_metadata.featurestore.online_enabled)):
+        raise OnlineFeaturestoreNotEnabled("Online Feature Store is not enabled for this project or cluster, "
+                                           "talk to an administrator to enable it")
     if featurestore is None:
         featurestore = fs_utils._do_get_project_featurestore()
 
@@ -201,8 +205,12 @@ def _run_and_log_sql(sql_str, featurestore, online=False):
                 "Running sql: {} against online feature store".format(sql_str))
             metadata = _get_featurestore_metadata(
                 featurestore, update_cache=False)
-            storage_connector = _do_get_online_featurestore_connector(
-                featurestore, metadata)
+            featurestore_metadata = _get_featurestore_metadata(featurestore, update_cache=False)
+            if online and ((not featurestore_metadata.settings.online_enabled) or
+                           (not featurestore_metadata.featurestore.online_enabled)):
+                raise OnlineFeaturestoreNotEnabled("Online Feature Store is not enabled for this project or cluster, "
+                                                   "talk to an administrator to enable it")
+            storage_connector = _do_get_online_featurestore_connector(featurestore, featurestore_metadata)
             pw, user = _get_online_feature_store_password_and_user(
                 storage_connector)
             parsed = urllib.parse.urlparse(urllib.parse.urlparse(
@@ -247,6 +255,10 @@ def _do_get_features(features, featurestore_metadata, featurestore=None, feature
         A pandas dataframe with all the features
 
     """
+    if online and ((not featurestore_metadata.settings.online_enabled) or
+                       (not featurestore_metadata.featurestore.online_enabled)):
+        raise OnlineFeaturestoreNotEnabled("Online Feature Store is not enabled for this project or cluster, "
+                                           "talk to an administrator to enable it")
     if featurestore is None:
         featurestore = fs_utils._do_get_project_featurestore()
 
@@ -278,6 +290,10 @@ def _do_get_featuregroup(featuregroup_name, featurestore_metadata, featurestore=
         a pandas dataframe with the contents of the featurestore
 
     """
+    if online and ((not featurestore_metadata.settings.online_enabled) or
+                       (not featurestore_metadata.featurestore.online_enabled)):
+        raise OnlineFeaturestoreNotEnabled("Online Feature Store is not enabled for this project or cluster, "
+                                           "talk to an administrator to enable it")
     if featurestore is None:
         featurestore = fs_utils._do_get_project_featurestore()
     fg = query_planner._find_featuregroup(
