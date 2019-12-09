@@ -193,8 +193,8 @@ def _validate_metadata(name, description, featurestore_settings):
     Raises:
         :ValueError: if the metadata does not match the required validation rules
     """
-    name_pattern = re.compile(featurestore_settings.featurestore_regex)
-    if len(name) > 256 or name == "" or not name_pattern.match(name):
+    name_pattern = featurestore_settings.featurestore_regex
+    if len(name) > 256 or not name_pattern.match(name):
         raise ValueError("Name of feature group/training dataset cannot be empty, cannot contain upper case characters,"
                          " cannot exceed 256 characters, and must match the regular expression: {}, the provided name: "
                          "{} is not valid".format(featurestore_settings.featurestore_regex, name))
