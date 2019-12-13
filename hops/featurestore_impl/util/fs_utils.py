@@ -193,13 +193,13 @@ def _validate_metadata(name, description, featurestore_settings):
     Raises:
         :ValueError: if the metadata does not match the required validation rules
     """
-    name_pattern = featurestore_settings.featurestore_regex
-    if len(name) > 256 or not name_pattern.match(name):
-        raise ValueError("Name of feature group/training dataset cannot be empty, cannot contain upper case characters,"
-                         " cannot exceed 256 characters, and must match the regular expression: {}, the provided name: "
-                         "{} is not valid".format(featurestore_settings.featurestore_regex, name))
+    if not featurestore_settings.featurestore_regex.match(name):
+        raise ValueError("Illegal feature store entity name, the provided name {} is invalid. Entity names can only "
+            "contain lower case characters, numbers and underscores and cannot be longer than {} characters or empty."
+            .format(name, featurestore_settings.entity_name_max_len))
 
-    if len(description) > 2000:
-        raise ValueError(
-            "Feature group/Training dataset description should not exceed the maximum length of 2000 characters, "
-            "the provided description has length: {}".format(len(description)))
+    if description:
+        if len(description) > featurestore_settings.entity_description_max_len:
+            raise ValueError("Illegal feature store entity description, the provided description for the entity {} is "
+                "too long with {} characters. Entity descriptions cannot be longer than {} characters."
+                .format(name, len(description), featurestore_settings.entity_description_max_len))
