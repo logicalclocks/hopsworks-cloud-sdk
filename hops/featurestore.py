@@ -1314,7 +1314,12 @@ def import_featuregroup_s3(storage_connector, featuregroup, path=None, primary_k
     arguments = locals()
     arguments['type'] = "S3"
     core._do_import_featuregroup(json.dumps(arguments))
-    job.launch_job(featuregroup)
+    #path to json file in hdfs
+    input_json_path = '--job_spec hdfs:///Projects/' + \
+                      os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_NAME_ENV_VAR] + \
+                      '/Resources/featurestore-trainingdataset-job/configurations/' + \
+                      featuregroup + '.json'
+    job.launch_job(featuregroup, input_json_path)
 
 def import_featuregroup_redshift(storage_connector, query, featuregroup, primary_key=[], description="",
                                  featurestore=None, featuregroup_version=1, jobs=[], descriptive_statistics=True,
@@ -1398,7 +1403,12 @@ def import_featuregroup_redshift(storage_connector, query, featuregroup, primary
     arguments = locals()
     arguments['type'] = "REDSHIFT"
     core._do_import_featuregroup(json.dumps(arguments))
-    job.launch_job(featuregroup)
+    #path to json file in hdfs
+    input_json_path = '--job_spec hdfs:///Projects/' + \
+                      os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_NAME_ENV_VAR] + \
+                      '/Resources/featurestore-trainingdataset-job/configurations/' + \
+                      featuregroup + '.json'
+    job.launch_job(featuregroup, input_json_path)
 
 
 def connect(host, project_name, port = 443, region_name = constants.AWS.DEFAULT_REGION,
