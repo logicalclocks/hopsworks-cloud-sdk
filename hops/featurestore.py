@@ -1317,7 +1317,7 @@ def import_featuregroup_s3(storage_connector, featuregroup, path=None, primary_k
     #path to json file in hdfs
     input_json_path = '--job_spec hdfs:///Projects/' + \
                       os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_NAME_ENV_VAR] + \
-                      '/Resources/featurestore-trainingdataset-job/configurations/' + \
+                      '/Resources/featurestore-import/configurations/' + \
                       featuregroup + '.json'
     job.launch_job(featuregroup, input_json_path)
 
