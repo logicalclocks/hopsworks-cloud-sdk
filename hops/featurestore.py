@@ -1314,7 +1314,12 @@ def import_featuregroup_s3(storage_connector, featuregroup, path=None, primary_k
     arguments = locals()
     arguments['type'] = "S3"
     core._do_import_featuregroup(json.dumps(arguments))
-    job.launch_job(featuregroup)
+    #path to json file in hdfs
+    input_json_path = '--job_spec hdfs:///Projects/' + \
+                      os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_NAME_ENV_VAR] + \
+                      '/Resources/featurestore_import/configurations/' + \
+                      featuregroup + '.json'
+    job.launch_job(featuregroup, input_json_path)
 
 def import_featuregroup_redshift(storage_connector, query, featuregroup, primary_key=[], description="",
                                  featurestore=None, featuregroup_version=1, jobs=[], descriptive_statistics=True,
@@ -1398,7 +1403,12 @@ def import_featuregroup_redshift(storage_connector, query, featuregroup, primary
     arguments = locals()
     arguments['type'] = "REDSHIFT"
     core._do_import_featuregroup(json.dumps(arguments))
-    job.launch_job(featuregroup)
+    #path to json file in hdfs
+    input_json_path = '--job_spec hdfs:///Projects/' + \
+                      os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_NAME_ENV_VAR] + \
+                      '/Resources/featurestore_import/configurations/' + \
+                      featuregroup + '.json'
+    job.launch_job(featuregroup, input_json_path)
 
 
 def connect(host, project_name, port = 443, region_name = constants.AWS.DEFAULT_REGION,
@@ -1552,7 +1562,12 @@ def create_training_dataset(training_dataset, features=None, sql_query=None, fea
     # treat featuregroups_version_dict as string
     job_conf['featuregroups_version_dict'] = json.dumps(job_conf['featuregroups_version_dict'])
     core._do_trainingdataset_create(json.dumps(job_conf))
-    job.launch_job(training_dataset)
+    #path to json file in hdfs
+    input_json_path = '--job_spec hdfs:///Projects/' + \
+                      os.environ[constants.ENV_VARIABLES.HOPSWORKS_PROJECT_NAME_ENV_VAR] + \
+                      '/Resources/featurestore-trainingdataset-job/configurations/' + \
+                      training_dataset + '.json'
+    job.launch_job(training_dataset, input_json_path)
     print('Training Dataset job successfully started')
 
 def add_metadata(featuregroup_name, metadata, featuregroup_version=1, featurestore=None):
