@@ -408,7 +408,7 @@ def _do_get_training_dataset_path(training_dataset_name, featurestore_metadata, 
     training_dataset = query_planner._find_training_dataset(featurestore_metadata.training_datasets,
                                                             training_dataset_name,
                                                             training_dataset_version)
-    hdfs_path = training_dataset.hopsfs_training_dataset.hdfs_store_path + \
+    hdfs_path = training_dataset.location + \
         constants.DELIMITERS.SLASH_DELIMITER + training_dataset.name
     data_format = training_dataset.data_format
     if data_format == constants.FEATURE_STORE.TRAINING_DATASET_NPY_FORMAT:
@@ -416,7 +416,7 @@ def _do_get_training_dataset_path(training_dataset_name, featurestore_metadata, 
     if data_format == constants.FEATURE_STORE.TRAINING_DATASET_HDF5_FORMAT:
         hdfs_path = hdfs_path + constants.FEATURE_STORE.TRAINING_DATASET_HDF5_SUFFIX
     if data_format == constants.FEATURE_STORE.TRAINING_DATASET_IMAGE_FORMAT:
-        hdfs_path = training_dataset.hopsfs_training_dataset.hdfs_store_path
+        hdfs_path = training_dataset.location
     # abspath means "hdfs://namenode:port/ is preprended
     abspath = util.abspath(hdfs_path)
     return abspath
