@@ -35,11 +35,11 @@ pipeline {
         """
       }
     }
-    stage ('update-it-notebook') {
-      steps {
-        sh 'scp it_tests/integration_tests_hopsworks_cloud_sdk.ipynb snurran:/var/www/hops/hopsworks-cloud-sdk_tests'
-      }
-    }
+    //stage ('update-it-notebook') {
+    //  steps {
+    //    sh 'scp it_tests/integration_tests_hopsworks_cloud_sdk.ipynb snurran:/var/www/hops/hopsworks-cloud-sdk_tests'
+    //  }
+    //}
     stage ('deploy-bin') {
       environment {
         PYPI = credentials('977daeb0-e1c8-43a0-b35a-fc37bb9eee9b')
