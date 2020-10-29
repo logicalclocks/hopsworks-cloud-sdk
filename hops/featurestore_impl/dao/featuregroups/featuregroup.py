@@ -27,6 +27,7 @@ class Featuregroup(FeaturestoreEntity):
         self.version = featuregroup_json[constants.REST_CONFIG.JSON_FEATUREGROUP_VERSION]
         self.id = featuregroup_json[constants.REST_CONFIG.JSON_FEATUREGROUP_ID]
 
+        self.featuregroup_type = featuregroup_json[constants.REST_CONFIG.JSON_FEATUREGROUP_TYPE]
         if(self.featuregroup_type == "onDemandFeaturegroupDTO"):
             self.on_demand_featuregroup = OnDemandFeaturegroup(featuregroup_json)
         if(self.featuregroup_type == "cachedFeaturegroupDTO"):
