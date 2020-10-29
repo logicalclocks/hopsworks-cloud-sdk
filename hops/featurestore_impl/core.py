@@ -299,13 +299,12 @@ def _do_get_featuregroup(featuregroup_name, featurestore_metadata, featurestore=
     fg = query_planner._find_featuregroup(
         featurestore_metadata.featuregroups, featuregroup_name, featuregroup_version)
 
-    if fg.featuregroup_type == featurestore_metadata.settings.cached_featuregroup_type:
+    if fg.featuregroup_type == "cachedFeaturegroupDTO":
         return _do_get_cached_featuregroup(featuregroup_name, featurestore, featuregroup_version, online)
 
     raise ValueError("The feature group type: "
-                     + fg.featuregroup_type + " was not recognized. Recognized types include: {} and {}"
-                     .format(featurestore_metadata.settings.on_demand_featuregroup_type,
-                             featurestore_metadata.settings.cached_featuregroup_type))
+                     + fg.featuregroup_type + " was not recognized. Recognized types include: {}"
+                     .format(featurestore_metadata.settings.cached_featuregroup_type))
 
 
 def _do_get_cached_featuregroup(featuregroup_name, featurestore=None, featuregroup_version=1, online=False):
@@ -440,7 +439,7 @@ def _do_get_featuregroup_partitions(featuregroup_name, featurestore_metadata, fe
      """
     fg = query_planner._find_featuregroup(
         featurestore_metadata.featuregroups, featuregroup_name, featuregroup_version)
-    if fg.featuregroup_type == featurestore_metadata.settings.on_demand_featuregroup_type:
+    if fg.featuregroup_type == "onDemandFeaturegroupDTO":
         raise CannotGetPartitionsOfOnDemandFeatureGroup("The feature group with name: {} , and version: {} "
                                                         "is an on-demand feature group. "
                                                         "Get partitions operation is only supported for "
