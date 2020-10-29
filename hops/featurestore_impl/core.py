@@ -439,7 +439,7 @@ def _do_get_featuregroup_partitions(featuregroup_name, featurestore_metadata, fe
      """
     fg = query_planner._find_featuregroup(
         featurestore_metadata.featuregroups, featuregroup_name, featuregroup_version)
-    if fg.featuregroup_type == "onDemandFeaturegroupDTO" 
+    if fg.featuregroup_type == "onDemandFeaturegroupDTO":
         raise CannotGetPartitionsOfOnDemandFeatureGroup("The feature group with name: {} , and version: {} "
                                                         "is an on-demand feature group. "
                                                         "Get partitions operation is only supported for "
