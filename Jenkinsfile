@@ -1,7 +1,7 @@
 pipeline {
   agent {
     node {
-      label 'platform_testing'
+      label 'local'
     }
   }
 
@@ -24,14 +24,6 @@ pipeline {
         sh """
         source $WORKSPACE/../hopsworks-cloud-sdk-env/bin/activate
         python ./setup.py sdist
-        """
-      }
-    }
-    stage ('build-doc') {
-      steps {
-        sh """
-        source $WORKSPACE/../hopsworks-cloud-sdk-env/bin/activate
-        cd docs; sphinx-apidoc -f -o source/ ../hops ../hops/version.py ../hops/constants.py ../hops/featurestore_impl/; make html; cd ..
         """
       }
     }
