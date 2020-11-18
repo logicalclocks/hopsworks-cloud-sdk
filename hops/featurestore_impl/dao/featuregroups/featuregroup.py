@@ -2,6 +2,7 @@ from hops import constants
 from hops.featurestore_impl.dao.common.featurestore_entity import FeaturestoreEntity
 from hops.featurestore_impl.dao.featuregroups.cached_featuregroup import CachedFeaturegroup
 from hops.featurestore_impl.dao.featuregroups.on_demand_featuregroup import OnDemandFeaturegroup
+from hops.featurestore_impl.dao.features.feature import Feature
 
 
 class Featuregroup(FeaturestoreEntity):
@@ -42,3 +43,13 @@ class Featuregroup(FeaturestoreEntity):
         Returns: true if the feature group has online serving enabled, otherwise false
         """
         return (self.featuregroup_type == "cachedFeaturegroupDTO" and self.cached_featuregroup.online_enabled)
+
+    def _parse_features(self, features_json):
+        """
+        Parses a list of features in JSON format into a list of Feature objects
+        Args:
+            :features_json: json representation of the list of features
+        Returns:
+            a list of Feature objects
+        """
+        return list(map(lambda feature_json: Feature(feature_json), features_json))
