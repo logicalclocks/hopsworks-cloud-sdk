@@ -1,5 +1,5 @@
 from hops import constants
-om hops.featurestore_impl.dao.datasets.training_dataset import TrainingDataset
+from hops.featurestore_impl.dao.datasets.training_dataset import TrainingDataset
 from hops.featurestore_impl.dao.featuregroups.featuregroup import Featuregroup
 from hops.featurestore_impl.dao.featurestore.featurestore import Featurestore
 from hops.featurestore_impl.dao.settings.featurestore_settings import FeaturestoreSettings
